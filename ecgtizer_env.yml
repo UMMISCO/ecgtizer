@@ -1,0 +1,47 @@
+name: ecgtizer_env
+channels:
+  - defaults
+dependencies:
+  - ca-certificates=2023.12.12=hecd8cb5_0
+  - certifi=2024.2.2=py38hecd8cb5_0
+  - libcxx=14.0.6=h9765a3e_0
+  - libedit=3.1.20230828=h6c40b1e_0
+  - libffi=3.2.1=h0a44026_1007
+  - ncurses=6.4=hcec6c5f_0
+  - openssl=1.1.1w=hca72f7f_0
+  - pip=23.3.1=py38hecd8cb5_0
+  - python=3.8.0=h359304d_2
+  - readline=7.0=h1de35cc_5
+  - setuptools=68.2.2=py38hecd8cb5_0
+  - sqlite=3.33.0=hffcf06c_0
+  - tk=8.6.12=h5d9f67b_0
+  - wheel=0.37.1=pyhd3eb1b0_0
+  - xz=5.4.5=h6c40b1e_0
+  - zlib=1.2.13=h4dc903c_0
+  - pip:
+    - chardet==5.2.0
+    - contourpy==1.1.1
+    - cycler==0.12.1
+    - fastdtw==0.3.4
+    - fonttools==4.49.0
+    - importlib-resources==6.1.1
+    - kiwisolver==1.4.5
+    - matplotlib==3.7.5
+    - numpy==1.24.4
+    - opencv-python==4.9.0.80
+    - packaging==23.2
+    - pandas==2.0.3
+    - pdf2image==1.17.0
+    - pillow==10.2.0
+    - pycompare==1.5.4
+    - pyparsing==3.1.1
+    - pytesseract==0.3.10
+    - python-dateutil==2.8.2
+    - pytz==2024.1
+    - reportlab==4.1.0
+    - scipy==1.10.1
+    - six==1.16.0
+    - tzdata==2024.1
+    - xmltodict==0.13.0
+    - zipp==3.17.0
+prefix: /Users/alexlence/opt/anaconda3/envs/ecgtizer_env
