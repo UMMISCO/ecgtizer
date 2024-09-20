@@ -4,6 +4,15 @@
 
 ECGtizer is a tool for digitizing ECGs PDF. We have also work to be able to complete the ECG extracted. Indeed the extracted leads are often represented only on 2.5sec or 5sec whearas the record last 10sec. We have developped a model to complete the leads.
 
+## Installation
+
+Ensure you have the required dependencies installed by creating a Conda environment using the provided `ecgtizer_env.yml` file.
+
+```bash
+conda env create -f ecgtizer_env.yml
+conda activate ecgtizer
+```
+
 ## How ECGtizer  works
 
 ECGtizer create a object from a pdf file:
