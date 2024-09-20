@@ -44,7 +44,7 @@ begin (optional) : The position on the lead you want to start with\
 end (optional) : The position on the lead you want to end with\
 completion(optional, bool): If you want to plot the complete lead,
 save (optinal) : The location to save the plot, if you do not indicate any location the plot will not be saved\
-![This is a alt text.](/plot/Plot_all_leads.png)
+
 
 ### 3/ Third Step: Save
 You can save the extracted leads into an xml format with the function *save_xml*:
@@ -63,45 +63,4 @@ model_path (str): location of the model to use for the completion in .pth format
 device (torch.device): device to use for the completion
 ❗❗❗️ The  Completed  leads will replace the extracted leads you can  plot and save the completed leads like you do with the extracted leads ❗❗❗️ 
 
-## Other modules you can use
-
-With the packages analysis you will be able to compare the extracted/completed leads with true leads from a xml files. For that you can use the function *analyse* from the package **analyses**. This function allow to compute a dictionnary with the results of the Pearson correlation / MSE / DTW for each leads between the real ECG and the extracted ones.
-
-```
-from analyses import analyse, BlandAltman, scatter_plot, read_xml, alignement, overlap_plot
-dic_res = analyse(path_true, path_ex)
-``` 
-path_true : Location of the xml with the true leads\
-path_ex : Location of the xml with the extracted leads
-
-In this package you will find functions to plot the differences between the real leads and the extracted one. You have *overlap_plot*, *scatter_plot* and *BlandAltman* functions:
-```
-from analyses import overlap_plot
-overlap_plot(file1, file2, lead = '', save = False)
-```
-file1 : Location of the xml with the true leads\
-file2 : Location of the xml with the extracted leads\
-lead (optional): The lead you want to plot, if you do not indicate any lead all the leads will be plot\
-save (optinal) : Location to save the plot\
-![This is a alt text.](/plot/Plot_all_leads_overlap.png)
-
-```
-from analyses import scatter_plot
-scatter_plot(file1, file2, lead = '', save = False)
-```
-file1 : Location of the xml with the true leads\
-file2 : Location of the xml with the extracted leads\
-lead (optional): The lead you want to plot, if you do not indicate any lead all the leads will be plot\
-save (optinal) : Location to save the plot\
-![This is a alt text.](/plot/Plot_all_leads_scatter.png)
-
-```
-from analyses import analyse, BlandAltman
-BlandAltman(file1, file2, lead = '', save = False)
-```
-file1 : Location of the xml with the true leads\
-file2 : Location of the xml with the extracted leads\
-lead (optional): The lead you want to plot, if you do not indicate any lead all the leads will be plot\
-save (optinal) : Location to save the plot (❗️If you save the plot it will not be plot)\
-![This is a alt text.](/plot/Plot_all_leads_ba.png)
 
