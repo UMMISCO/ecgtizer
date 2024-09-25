@@ -20,7 +20,7 @@ ECGtizer create a object from a pdf file:
 ## How to use ECGtizer with bash
 
 ```
-python ECGtyzer_main.py "data/PTB-XL/PDF/00121_hr.pdf" 500 --verbose "data/PTB-XL/Digitized/test.xml"
+python ECGtyzer_main.py "data/PTB-XL/PDF/00121_hr.pdf" 500 "fragmented" --verbose "data/PTB-XL/Digitized/test.xml"
 ```
 
 ## How to use ECGtizer with Jupyter Notebook
