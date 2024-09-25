@@ -17,6 +17,14 @@ conda activate ecgtizer
 
 ECGtizer create a object from a pdf file:
 
+## How to use ECGtizer with bash
+
+```
+python ECGtyzer_main.py "data/PTB-XL/PDF/00121_hr.pdf" 500 --verbose "data/PTB-XL/Digitized/test.xml"
+```
+
+## How to use ECGtizer with Jupyter Notebook
+
 ### 1/ First Step: Extraction
 ```
 from ecgtizer import ECGtizer
