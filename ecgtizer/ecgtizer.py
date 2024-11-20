@@ -1,7 +1,6 @@
 #Modules 
 from .PDF2XML import convert_PDF2image, check_noise_type, text_extraction, tracks_extraction, clean_tracks, sup_holes, lead_extraction, lead_cutting
 from .PDF2XML_mod import plot_function, write_xml
-from .completion import completion_
 
 
 import numpy as np
@@ -66,23 +65,34 @@ class ECGtizer:
         self.dic_image_bin           = []
         self.df_patient              = []
         self.dic_tracks_ex_not_scale = []
-        self.extracted_lead_comp     = None
         
      
         
         ### Convert PDF files to image ###
-        if verbose == True:
-            print("\n")
-            print("--- Conversion PDF in image : ", end='')
-            start = time.time()
-        images, page_number, _ = convert_PDF2image(file, DPI = dpi)
-        if _ == False:
-            self.good = False
-            return(None)
-        self.all_image = images
-        if verbose == True:
-            print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
-        page = 0
+        if file[-3:] == 'pdf':
+            if verbose == True:
+                print("\n")
+                print("--- Conversion PDF in image : ", end='')
+                start = time.time()
+            images, page_number, _ = convert_PDF2image(file, DPI = dpi)
+            if _ == False:
+                self.good = False
+                return(None)
+            self.all_image = images
+            if verbose == True:
+                print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+            page = 0
+        elif file[-3:] == 'png' or file[-3:] == 'jpg':
+            if verbose == True:
+                print("\n")
+                print("--- Open Image : ", end='')
+                start = time.time()
+            if _ == False:
+                self.good = False
+                return(None)
+            if verbose == True:
+                image = [cv2.imread(file)]
+                print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
         
         ### Convert all images ###
         for image in images:
@@ -128,11 +138,23 @@ class ECGtizer:
             if verbose == True:
                 print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
             
+            ### c/ Clean the tracks from outliers ### 
+            #if verbose == True:
+            #    print("--- Clean tracks : ", end='')
+            #    start = time.time()
+            #if TYPE.lower() != 'kardia':
+            #    clean_tracks(dic_tracks,TYPE, NOISE = NOISE, DEBUG = DEBUG )
+            #    self.dic_tracks_clean = clean_tracks
+            #if verbose == True:
+            #    print("\t\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+
+            
             ### d/ Convert the tracks in digital format ### 
             if verbose == True:
                 print("--- Tracks extraction : ", end='')
                 start = time.time()
             dic_tracks_ex, image_bin, dic_tracks_ex_not_scale = lead_extraction(dic_tracks, extraction_method, TYPE, NOISE = NOISE, DEBUG = DEBUG )
+            #dic_tracks_ex = lead_extraction(dic_tracks,TYPE, NOISE = NOISE, DEBUG = DEBUG )
             self.dic_tracks_ex = dic_tracks_ex
             self.dic_tracks_ex_not_scale = dic_tracks_ex_not_scale
             if verbose == True:
@@ -179,27 +201,17 @@ class ECGtizer:
         self.TYPE = TYPE
                 
     ### Plot the signal Extracted ###
-    def plot(self,lead = "",  begin = 0, end = 'inf', completion = False, save = False):
-        if completion == True :
-            if self.extracted_lead_comp is None:
-                print("You need to complete the ECG before plotting")
-            else:
-                plot_function(lead_all = self.extracted_lead_comp, lead = lead, b = begin, e = end, save = save)
-        else:
-            plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, save = save)
+    
+    def plot(self,lead = "",  begin = 0, end = 'inf', save = False):
+        plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, save = save)
         
     ### Save the ecg on xml ###
     def save_xml (self, save, num_version = '0.0', date_version = "17.O4.2023"):
         write_xml(matrix = self.extracted_lead, path_out = save, TYPE = self.TYPE, table = self.table_parameters, 
                   num_version = num_version, date_version  = date_version)
-    ### Complete the extracted leads ###    
-    def completion(self, path_model, device):
-        self.extracted_lead_comp = completion_(ecg = self.extracted_lead, path_model = path_model, device = device)
-
-    ### Save the completed ecg on xml ###    
-    def save_xml_completed (self, save, num_version = '0.0', date_version = "17.O4.2023"):
-        write_xml(matrix = self.extracted_lead_comp, path_out = save, TYPE = self.TYPE, table = self.table_parameters, 
-                  num_version = num_version, date_version  = date_version)
+        
+    def completion(self):
+        self.extracted_lead = completion_(matrix = self.extracted_lead)
         
         
         
