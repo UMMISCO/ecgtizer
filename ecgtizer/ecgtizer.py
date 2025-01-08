@@ -1,7 +1,7 @@
 #Modules 
 from .PDF2XML import convert_PDF2image, check_noise_type, text_extraction, tracks_extraction, clean_tracks, sup_holes, lead_extraction, lead_cutting
 from .PDF2XML_mod import plot_function, write_xml
-
+import cv2
 
 import numpy as np
 import time 
@@ -73,7 +73,11 @@ class ECGtizer:
             if verbose == True:
                 print("\n")
                 print("--- Conversion PDF in image : ", end='')
+            if Callback != None:
+                Callback("\n")
+                Callback("--- Conversion PDF in image : ", end='')
                 start = time.time()
+            print("file", file)
             images, page_number, _ = convert_PDF2image(file, DPI = dpi)
             if _ == False:
                 self.good = False
@@ -81,17 +85,17 @@ class ECGtizer:
             self.all_image = images
             if verbose == True:
                 print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+            if Callback != None:
+                Callback("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
             page = 0
         elif file[-3:] == 'png' or file[-3:] == 'jpg':
             if verbose == True:
                 print("\n")
                 print("--- Open Image : ", end='')
                 start = time.time()
-            if _ == False:
-                self.good = False
-                return(None)
+            images = [cv2.imread(file)]
+            page = 0
             if verbose == True:
-                image = [cv2.imread(file)]
                 print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
         
         ### Convert all images ###
@@ -103,6 +107,10 @@ class ECGtizer:
             if verbose == True:
                 print("--- Check Quality and Type of image : ", end='')
                 start = time.time()
+            if Callback != None:
+                Callback("--- Check Quality and Type of image : ", end='')
+                start = time.time()
+            print(np.array(image).shape)
             TYPE, NOISE = check_noise_type(np.array(image), dpi, DEBUG) 
             if self.typ != "":
                 TYPE = self.typ
@@ -116,11 +124,16 @@ class ECGtizer:
                 FORMAT = ''
             if verbose == True:
                 print("\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+            if Callback != None:
+                Callback("\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
                 
             ### b/ Check the image type ### 
             if verbose == True:
                 print("TYPE", TYPE)
                 print("--- Extract all the text from the image : ", end='')
+                start = time.time()
+            if Callback != None:
+                Callback("--- Extract all the text from the image : ", end='')
                 start = time.time()
             image_clean, df = text_extraction(np.array(image),page, dpi, NOISE, TYPE, DEBUG = DEBUG)
             if page == 0:
@@ -128,15 +141,22 @@ class ECGtizer:
             image = image_clean
             if verbose == True:
                 print("\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+            if Callback != None:
+                Callback("\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
             
             ### c/ Extract each tracks ### 
             if verbose == True:
                 print("--- Detect tracks position : ", end='')
                 start = time.time()
+            if Callback != None:
+                Callback("--- Detect tracks position : ", end='')
+                start = time.time()
             dic_tracks = tracks_extraction(np.array(image), TYPE, dpi, FORMAT, DEBUG = DEBUG)
             self.dic_tracks = dic_tracks
             if verbose == True:
                 print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+            if Callback != None:
+                Callback("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
             
             ### c/ Clean the tracks from outliers ### 
             #if verbose == True:
@@ -153,20 +173,32 @@ class ECGtizer:
             if verbose == True:
                 print("--- Tracks extraction : ", end='')
                 start = time.time()
+            if Callback != None:
+                Callback("--- Tracks extraction : ", end='')
+                start = time.time()
             dic_tracks_ex, image_bin, dic_tracks_ex_not_scale = lead_extraction(dic_tracks, extraction_method, TYPE, NOISE = NOISE, DEBUG = DEBUG )
             #dic_tracks_ex = lead_extraction(dic_tracks,TYPE, NOISE = NOISE, DEBUG = DEBUG )
             self.dic_tracks_ex = dic_tracks_ex
             self.dic_tracks_ex_not_scale = dic_tracks_ex_not_scale
             if verbose == True:
                 print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+            if Callback != None:
+                Callback("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+                
                 
                 
             if verbose == True:
                 print("--- Lead detection : ", end='')
                 start = time.time()    
+            if Callback != None:
+                Callback("--- Lead detection : ", end='')
+                start = time.time()
             dic_lead = lead_cutting(dic_tracks_ex, dpi,TYPE, FORMAT, page, NOISE = NOISE,  DEBUG = DEBUG )
             if verbose == True:
                 print("\t\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+            if Callback != None:
+                Callback("\t\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
+
 
             
                 
@@ -202,8 +234,8 @@ class ECGtizer:
                 
     ### Plot the signal Extracted ###
     
-    def plot(self,lead = "",  begin = 0, end = 'inf', save = False):
-        plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, save = save)
+    def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False):
+        plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save)
         
     ### Save the ecg on xml ###
     def save_xml (self, save, num_version = '0.0', date_version = "17.O4.2023"):

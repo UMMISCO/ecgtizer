@@ -8,7 +8,7 @@ import xmltodict as xml
 import numpy as np
 
 
-def plot_function(lead_all,lead = '', b = 0, e = 'inf', save = False):
+def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False):
     """
     Main function to write the XML from the numpy extracted ECG
     
@@ -77,7 +77,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', save = False):
             }
         if lead != '':
             plt.title(lead)
-            plt.plot(lead_all[lead])
+            plt.plot(lead_all[lead], c = c)
             plt.xlabel('Time (1/500)sec')
             plt.ylabel('Amplitude µV')
         else:
@@ -86,12 +86,12 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', save = False):
             for i in lead_all:
                 if i != 'ref' and i != 'IIc':
                     if len(dic_pos[i]) == 2 :
-                        axs[dic_pos[i][0],dic_pos[i][1]].plot(lead_all[i])
+                        axs[dic_pos[i][0],dic_pos[i][1]].plot(lead_all[i], c = c)
                         axs[dic_pos[i][0],dic_pos[i][1]].set_title('lead '+i)
                         axs[dic_pos[i][0],dic_pos[i][1]].set_xlabel('Time (1/500)sec')
                         axs[dic_pos[i][0],dic_pos[i][1]].set_ylabel('Amplitude µV')
                     else:
-                        axs[dic_pos[i][0]].plot(lead_all[i])
+                        axs[dic_pos[i][0]].plot(lead_all[i], c = c)
                         axs[dic_pos[i][0]].set_title('lead '+i)
                         axs[dic_pos[i][0]].set_xlabel('Time (1/500)sec')
                         axs[dic_pos[i][0]].set_ylabel('Amplitude µV')
@@ -119,10 +119,10 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', save = False):
             plt.show()
     else:
         if e == 'inf':
-            plt.plot(lead_all['all'][b:])
+            plt.plot(lead_all['all'][b:], c = c)
             
         else:
-            plt.plot(lead_all['all'][b:e])
+            plt.plot(lead_all['all'][b:e], c = c)
         if e == 'inf':
             e = len(lead_all['all'])
         plt.title('ECG from ' + str(int(b/500)) +'sec to '+str(int(e/500))+'sec')

@@ -33,7 +33,7 @@ def convert_PDF2image(path_input, DPI):
     int  : number of pages
     bool : True: The conversion has worked / False :  The conversion has not worked
     """
-
+    print(path_input)
     try:
         # Convert all the pages of the pdf into PIL
         pages = convert_from_path(path_input, poppler_path= '', dpi = DPI) 
