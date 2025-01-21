@@ -439,8 +439,13 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
         # Apply Otsu Thresholding
         ret,image_bin = cv2.threshold(img_blur,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU) 
     
+    plt.imshow(image_bin)
+    plt.show()
+    plt.figure(figsize = (20,20))
     # Compute the horizontal variance on binarized image
     horizontal_variance     = np.var(image_bin, axis = 1) 
+   
+    
     # If images are taller than they are wide the distance between two peaks is smaller
     if len(image) > len(image[0]):
         # Compute the pikes position
@@ -450,7 +455,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     if len(image) < len(image[0]):
         # Compute the pikes position
         #peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.05*len(image)))[0] 
-        peaks, _ = find_peaks(horizontal_variance, height=None, distance=int(len(image)/10))
+        peaks, _ = find_peaks(horizontal_variance, height=len(image[0]), distance=int(len(image)/10))
 
 
     
@@ -479,21 +484,19 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     it = 1
     for c in range(len(cut_pos)-1):
         if it == 1:
-            dic_tracks[c] = image[cut_pos[c]+int(0.05*len(image)):cut_pos[c+1]]
+            dic_tracks[c] = image_bin[cut_pos[c]+int(0.05*len(image)):cut_pos[c+1]]
         elif it == len(cut_pos)-1:
-            dic_tracks[c] = image[cut_pos[c]:cut_pos[c+1]-int(0.09*len(image))]
+            dic_tracks[c] = image_bin[cut_pos[c]:cut_pos[c+1]-int(0.09*len(image))]
         else:
-            dic_tracks[c] = image[cut_pos[c]:cut_pos[c+1]]
+            dic_tracks[c] = image_bin[cut_pos[c]:cut_pos[c+1]]
             
         it+=1
         
         if DEBUG == True:
-            
             plt.axhline(cut_pos[c], c = 'g', alpha = 0.6)
             
     # Plot the position of the cut in the image 
     if DEBUG == True:
-        
         plt.imshow(image)
         plt.axhline(cut_pos[-1], c = 'g', alpha = 0.6)
         for p in peaks:
@@ -501,6 +504,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
         
     # Compute the vertical variance   
     vertical_variance = np.var(image_bin, axis = 0) 
+
     # Define a list which will contain the pikes position
     peaks = [] 
     for var in range(len(vertical_variance)):
@@ -699,40 +703,7 @@ def lead_extraction(dic_tracks, extraction_method, TYPE, NOISE, DEBUG = False):
     dic_extracted_track_not_scale = {}
     for d in dic_tracks:
         # Kardia Files are already binarize
-        if TYPE.lower() != 'kardia':
-            # Convert the image in gray scale 
-            img_gray = cv2.cvtColor(dic_tracks[d],cv2.COLOR_BGR2GRAY)
-            # Apply a Gaussian Blur
-            img_blur = cv2.GaussianBlur(img_gray, (5,5), 0)
-
-            if TYPE == 'Wellue':
-                ret, image_bin = cv2.threshold(img_blur, 127, 255, cv2.THRESH_BINARY_INV)
-
-            else:
-                # If the image is noised we will use the Sauvola detection thresholding
-                if NOISE == True: 
-                    # Size of the local window for the Sauvola thresholding 
-                    WINDOW_SIZE = 3
-                    # Apply Sauvola Thresholding
-                    thresh_sauvola = threshold_sauvola(img_blur, window_size=WINDOW_SIZE)
-
-                    # Binarize image
-                    image_bin = img_blur < thresh_sauvola 
-                    image_bin2 = np.ones((len(image_bin),len(image_bin[0])))
-                    for i in range(len(image_bin)):
-                        for j in range(len(image_bin[i])):
-                            if image_bin[i][j] == False:
-                                image_bin2[i][j] = 0
-                            else :
-                                image_bin2[i][j] = 255
-                    image_bin = image_bin2.astype("uint8")
-
-                # If the image is not noised we will use the Otsu thresholding    
-                else: 
-                    # Apply Otsu detection thresholding
-                    ret,image_bin = cv2.threshold(img_blur,0, 255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU) 
-        else:
-            image_bin = dic_tracks[d]
+        image_bin = dic_tracks[d]
         # Plot the binarized image
         if DEBUG == True:
             plt.imshow(image_bin)
