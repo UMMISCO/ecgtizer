@@ -33,7 +33,6 @@ def convert_PDF2image(path_input, DPI):
     int  : number of pages
     bool : True: The conversion has worked / False :  The conversion has not worked
     """
-    print(path_input)
     try:
         # Convert all the pages of the pdf into PIL
         pages = convert_from_path(path_input, poppler_path= '', dpi = DPI) 
@@ -442,8 +441,6 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     
     # Compute the horizontal variance on binarized image
     horizontal_variance     = np.var(image_bin, axis = 1) 
-    
-    
     # If images are taller than they are wide the distance between two peaks is smaller
     if len(image) > len(image[0]):
         # Compute the pikes position
@@ -453,7 +450,8 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     if len(image) < len(image[0]):
         # Compute the pikes position
         #peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.05*len(image)))[0] 
-        peaks, _ = find_peaks(horizontal_variance, height=None, distance=int(len(image)/6))
+        peaks, _ = find_peaks(horizontal_variance, height=None, distance=int(len(image)/10))
+
 
     
     if DEBUG == True:

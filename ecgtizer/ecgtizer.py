@@ -17,7 +17,7 @@ class ECGtizer:
     
     """
 
-    def __init__(self, file, dpi, extraction_method = "fragmented",typ = "", verbose = False, DEBUG = False):
+    def __init__(self, file, dpi, Callback = None, extraction_method = "fragmented",typ = "", verbose = False, DEBUG = False):
         ### Variables ###
         self.file = file
         self.typ  = typ
@@ -77,7 +77,6 @@ class ECGtizer:
                 Callback("\n")
                 Callback("--- Conversion PDF in image : ", end='')
                 start = time.time()
-            print("file", file)
             images, page_number, _ = convert_PDF2image(file, DPI = dpi)
             if _ == False:
                 self.good = False
@@ -110,7 +109,6 @@ class ECGtizer:
             if Callback != None:
                 Callback("--- Check Quality and Type of image : ", end='')
                 start = time.time()
-            print(np.array(image).shape)
             TYPE, NOISE = check_noise_type(np.array(image), dpi, DEBUG) 
             if self.typ != "":
                 TYPE = self.typ
