@@ -439,9 +439,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
         # Apply Otsu Thresholding
         ret,image_bin = cv2.threshold(img_blur,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU) 
     
-    plt.imshow(image_bin)
-    plt.show()
-    plt.figure(figsize = (20,20))
+
     # Compute the horizontal variance on binarized image
     horizontal_variance     = np.var(image_bin, axis = 1) 
    
