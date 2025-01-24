@@ -232,8 +232,8 @@ class ECGtizer:
                 
     ### Plot the signal Extracted ###
     
-    def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False):
-        plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save)
+    def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False, transparent = False):
+        plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
         
     ### Save the ecg on xml ###
     def save_xml (self, save, num_version = '0.0', date_version = "17.O4.2023"):

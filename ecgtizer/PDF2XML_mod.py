@@ -8,7 +8,7 @@ import xmltodict as xml
 import numpy as np
 
 
-def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False):
+def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, transparent = False):
     """
     Main function to write the XML from the numpy extracted ECG
     
@@ -115,7 +115,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False):
                         name = path + name_temp[0]+'('+str(a)+').'+name_temp[1]
                     a+=1
                 print(name)
-                plt.savefig(name, transparent=True)
+                plt.savefig(name, transparent=transparent)
             plt.show()
     else:
         if e == 'inf':
@@ -146,7 +146,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False):
                     name = path + name_temp[0]+'('+str(a)+').'+name_temp[1]
                 a+=1
             print(name)
-            plt.savefig(name, transparent=True)
+            plt.savefig(name, transparent=transparent)
         plt.show()
         
 
