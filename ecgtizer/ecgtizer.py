@@ -1,6 +1,7 @@
 #Modules 
 from .PDF2XML import convert_PDF2image, check_noise_type, text_extraction, tracks_extraction, clean_tracks, sup_holes, lead_extraction, lead_cutting
 from .PDF2XML_mod import plot_function, write_xml, plot_overlay
+from .completion import completion_
 import cv2
 
 import numpy as np
@@ -235,8 +236,11 @@ class ECGtizer:
                 
     ### Plot the signal Extracted ###
     
-    def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False, transparent = False):
-        plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
+    def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False, transparent = False, completion = False):
+        if completion == False:
+            plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
+        else:
+            plot_function(lead_all = self.extracted_lead_comp, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
     
     def plot_over(self):
         plot_overlay(lead = self.dic_tracks_ex_not_scale, image = self.all_image[0], piqueh = self.varianceh, piquev = self.variancev)
@@ -246,8 +250,8 @@ class ECGtizer:
         write_xml(matrix = self.extracted_lead, path_out = save, TYPE = self.TYPE, table = self.table_parameters, 
                   num_version = num_version, date_version  = date_version)
         
-    def completion(self):
-        self.extracted_lead = completion_(matrix = self.extracted_lead)
+    def completion(self, path_model, device):
+        self.extracted_lead_comp = completion_(ecg = self.extracted_lead, path_model = path_model, device = device)
         
         
         

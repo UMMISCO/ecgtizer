@@ -223,10 +223,15 @@ def normalization2(Z):
     maxi=Z.max()
     return(-1+((Z-mini)*(2))/(maxi-mini), mini,maxi)
 def replace_random(array, True_data = False):
-    dic_split = {0 : (0,128),1 : (0,512),2 : (0,128),
-             3 : (128,256),4 : (128,256),5 : (128,256),
-             6 : (256,384),7 : (256,384),8 : (256,384),
-             9 : (384,512),10 : (384,512),11 : (384,512)}
+    if len(array) == 13:
+        dic_split = {0 : (0,128),1 : (0,512),2 : (0,128),
+                3 : (128,256),4 : (128,256),5 : (128,256),
+                6 : (256,384),7 : (256,384),8 : (256,384),
+                9 : (384,512),10 : (384,512),11 : (384,512)}
+    else:
+        dic_split = {0 : (0, 256), 1 : (0, 256), 2 : (0, 256), 3 : (0, 256), 4 : (0, 256), 5 : (0, 256),
+                6 : (256, 512), 7 : (256, 512), 8 : (256, 512), 9 : (256, 512), 10 : (256, 512), 11 : (256, 512)}
+    
     final_matrix = np.random.random((1,12,512))
     array, scale = normalization(array)
     if True_data == False:
@@ -247,7 +252,10 @@ def load_model(path, device):
 
 def completion_(ecg, path_model, device):
     model = load_model(path_model, device)
-    dic_sorted = ['I', 'IIc', 'III', 'AVL', 'AVR', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
+    if 'IIc' in ecg.keys():
+        dic_sorted = ['I', 'IIc', 'III', 'AVL', 'AVR', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
+    else:
+        dic_sorted = ['I', 'II', 'III', 'AVL', 'AVR', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
     matrix_to_complete = np.zeros((12,5000))
     for k in dic_sorted:
         matrix_to_complete[dic_sorted.index(k),:] = np.nan_to_num(ecg[k])
