@@ -148,6 +148,15 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, 
             print(name)
             plt.savefig(name, transparent=transparent)
         plt.show()
+
+def plot_overlay(lead,image, piqueh, piquev):
+    plt.imshow(image, cmap = 'gray')
+    for i in range(len(piqueh)):
+        median = np.median(lead[i])
+        aj = piqueh[i] - median
+        beg = [np.nan for i in range(piquev)]
+        plt.plot(np.concatenate((beg,lead[i] + aj)), c = 'r')
+
         
 
 def write_lead_root(code_lead, codeSystem, code_lead_name, scale_y):

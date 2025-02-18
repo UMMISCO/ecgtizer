@@ -217,7 +217,7 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
         # Compute the horizontal variance
         horizontal_variance = np.var(image_bin, axis = 1)
         # Detect the variance peaks
-        peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.8*DPI))[0] # Compute the pikes position
+        peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(len(image)/10))[0] # Compute the pikes position
         # starting position on the x-axis
         x = 0
         # Ending position on the x-axis
@@ -346,7 +346,7 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
         plt.imshow(image)
         plt.show()
         
-    return(image,df)
+    return(image, dic)
 
 
 
@@ -447,19 +447,19 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     # If images are taller than they are wide the distance between two peaks is smaller
     if len(image) > len(image[0]):
         # Compute the pikes position
-        peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.010*len(image)))[0] 
+        peaksh = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.010*len(image)))[0] 
         
     # If images are wide than they are taller the distance between two peaks is bigger
     if len(image) < len(image[0]):
         # Compute the pikes position
         #peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.05*len(image)))[0] 
-        peaks, _ = find_peaks(horizontal_variance, height=len(image[0]), distance=int(len(image)/10))
+        peaksh, _ = find_peaks(horizontal_variance, height=len(image[0]), distance=int(len(image)/10))
 
 
     
     if DEBUG == True:
         plt.plot(horizontal_variance)
-        for p in peaks:
+        for p in peaksh:
             plt.axvline(p, c = "r")
         plt.savefig("Horrizontal_variance.png")
         plt.show()
@@ -469,8 +469,8 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     # Define a list with all the position to cut between tracks a we store the beggining of the image
     cut_pos = [0]
     # for all peaks we only keep the position between them
-    for p in range(len(peaks)-1):
-        cut_pos.append(int((peaks[p]+peaks[p+1])/2))
+    for p in range(len(peaksh)-1):
+        cut_pos.append(int((peaksh[p]+peaksh[p+1])/2))
     # We store the ending of the image
     cut_pos.append(len(image))
     
@@ -504,23 +504,23 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     vertical_variance = np.var(image_bin, axis = 0) 
 
     # Define a list which will contain the pikes position
-    peaks = [] 
+    peaksv = [] 
     for var in range(len(vertical_variance)):
         # If the variance is no null then there is a signal waveform a we must not cut here the signal
         if vertical_variance[var] > 0 : 
             # Pikes take the beggining position of the waveform
-            peaks.append(var)
+            peaksv.append(var)
     
     
             
     # For all the tracks we cut vertically the part which not contain waveform
     for track in dic_tracks.keys(): 
-        dic_tracks[track] = dic_tracks[track][:,peaks[0]:peaks[-1]]
+        dic_tracks[track] = dic_tracks[track][:,peaksv[0]:peaksv[-1]]
     
     # Plot the position of the cut in the image 
     if DEBUG == True:
-        plt.axvline(peaks[0])
-        plt.axvline(peaks[-1])
+        plt.axvline(peaksv[0])
+        plt.axvline(peaksv[-1])
         plt.savefig("Image_of_tracks.png")
         plt.show()
         
@@ -528,13 +528,13 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
         plt.plot(vertical_variance)
         
         
-        plt.axvline(peaks[0], c = "r")
-        plt.axvline(peaks[-1], c = "r")
+        plt.axvline(peaksv[0], c = "r")
+        plt.axvline(peaksv[-1], c = "r")
         plt.savefig("Vertical_variance.png")
         plt.show()
     
     
-    return(dic_tracks)
+    return(dic_tracks, peaksh, peaksv[0])
 
 
 

@@ -1,6 +1,6 @@
 #Modules 
 from .PDF2XML import convert_PDF2image, check_noise_type, text_extraction, tracks_extraction, clean_tracks, sup_holes, lead_extraction, lead_cutting
-from .PDF2XML_mod import plot_function, write_xml
+from .PDF2XML_mod import plot_function, write_xml, plot_overlay
 import cv2
 
 import numpy as np
@@ -65,6 +65,7 @@ class ECGtizer:
         self.dic_image_bin           = []
         self.df_patient              = []
         self.dic_tracks_ex_not_scale = []
+        self.variance                = []
         
      
         
@@ -149,7 +150,9 @@ class ECGtizer:
             if Callback != None:
                 Callback("--- Detect tracks position : ", end='')
                 start = time.time()
-            dic_tracks = tracks_extraction(np.array(image), TYPE, dpi, FORMAT, DEBUG = DEBUG)
+            dic_tracks, varianceh, variancev = tracks_extraction(np.array(image), TYPE, dpi, FORMAT, DEBUG = DEBUG)
+            self.varianceh = varianceh
+            self.variancev = variancev
             self.dic_tracks = dic_tracks
             if verbose == True:
                 print("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
@@ -234,6 +237,9 @@ class ECGtizer:
     
     def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False, transparent = False):
         plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
+    
+    def plot_over(self):
+        plot_overlay(lead = self.dic_tracks_ex_not_scale, image = self.all_image[0], piqueh = self.varianceh, piquev = self.variancev)
         
     ### Save the ecg on xml ###
     def save_xml (self, save, num_version = '0.0', date_version = "17.O4.2023"):
