@@ -447,7 +447,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     # If images are taller than they are wide the distance between two peaks is smaller
     if len(image) > len(image[0]):
         # Compute the pikes position
-        peaksh = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.010*len(image)))[0] 
+        peaksh, _ = find_peaks(horizontal_variance, height=len(image[0]), distance = int(len(image)/15))
         
     # If images are wide than they are taller the distance between two peaks is bigger
     if len(image) < len(image[0]):
@@ -497,7 +497,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     if DEBUG == True:
         plt.imshow(image)
         plt.axhline(cut_pos[-1], c = 'g', alpha = 0.6)
-        for p in peaks:
+        for p in peaksh:
             plt.axhline(p, c = 'r', alpha = 0.6)
         
     # Compute the vertical variance   

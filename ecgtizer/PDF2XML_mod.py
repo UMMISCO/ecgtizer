@@ -157,6 +157,8 @@ def plot_overlay(lead,image, piqueh, piquev):
         beg = [np.nan for i in range(piquev)]
         plt.plot(np.concatenate((beg,lead[i] + aj)), c = 'r')
 
+
+
         
 
 def write_lead_root(code_lead, codeSystem, code_lead_name, scale_y):
