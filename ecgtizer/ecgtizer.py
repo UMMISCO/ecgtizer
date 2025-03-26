@@ -75,6 +75,7 @@ class ECGtizer:
             if verbose == True:
                 print("\n")
                 print("--- Conversion PDF in image : ", end='')
+                start = time.time()
             if Callback != None:
                 Callback("\n")
                 Callback("--- Conversion PDF in image : ", end='')
@@ -111,7 +112,8 @@ class ECGtizer:
             if Callback != None:
                 Callback("--- Check Quality and Type of image : ", end='')
                 start = time.time()
-            TYPE, NOISE = check_noise_type(np.array(image), dpi, DEBUG) 
+            self.image = np.array(image)
+            TYPE, NOISE = check_noise_type(self.image, dpi, DEBUG) 
             if self.typ != "":
                 TYPE = self.typ
             # Kardia Format is particular
@@ -135,7 +137,7 @@ class ECGtizer:
             if Callback != None:
                 Callback("--- Extract all the text from the image : ", end='')
                 start = time.time()
-            image_clean, df = text_extraction(np.array(image),page, dpi, NOISE, TYPE, DEBUG = DEBUG)
+            image_clean, df = text_extraction(self.image,page, dpi, NOISE, TYPE, DEBUG = DEBUG)
             if page == 0:
                 self.df_patient = df
             image = image_clean
@@ -151,7 +153,7 @@ class ECGtizer:
             if Callback != None:
                 Callback("--- Detect tracks position : ", end='')
                 start = time.time()
-            dic_tracks, varianceh, variancev = tracks_extraction(np.array(image), TYPE, dpi, FORMAT, DEBUG = DEBUG)
+            dic_tracks, varianceh, variancev = tracks_extraction(self.image, TYPE, dpi, FORMAT, DEBUG = DEBUG, NOISE = NOISE)
             self.varianceh = varianceh
             self.variancev = variancev
             self.dic_tracks = dic_tracks
@@ -243,7 +245,7 @@ class ECGtizer:
             plot_function(lead_all = self.extracted_lead_comp, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
     
     def plot_over(self):
-        plot_overlay(lead = self.dic_tracks_ex_not_scale, image = self.all_image[0], piqueh = self.varianceh, piquev = self.variancev)
+        plot_overlay(lead = self.dic_tracks_ex_not_scale, image = self.image, piqueh = self.varianceh, piquev = self.variancev)
         
     ### Save the ecg on xml ###
     def save_xml (self, save, num_version = '0.0', date_version = "17.O4.2023"):

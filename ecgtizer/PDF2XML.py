@@ -72,7 +72,7 @@ def check_noise_type(image, DPI, DEBUG):
         return("Kardia", False)
     
     # Check the variance in the image 
-    if np.var(image) > 3000 or np.var(image) < 600 :
+    if np.var(image) > 2000 or np.var(image) < 600 :
         if np.var(image) > 3000:
             # above a variance of 3000 the image is considered noisy
             NOISE = True
@@ -209,7 +209,6 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
     image_gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     # Apply a Gaussian Blur
     image_blur = cv2.GaussianBlur(image_gray, (5,5), 0) 
-    
     # If the image is noised we apply a deterministic threshold
     if NOISE == True or NOISE == 0.5: 
         # Binarize the image with the deterministic threshold
@@ -340,12 +339,16 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
             df = pd.DataFrame(dic, index = [0]).T
     # Plot the image with the detected rectangles
     if DEBUG == True:
-        plt.figure(figsize = (20,14))
-        plt.imshow(rect)
-        plt.show()
-        plt.imshow(image)
-        plt.show()
-        
+        try:
+            plt.figure(figsize = (20,14))
+            plt.imshow(rect)
+            plt.show()
+            plt.imshow(image)
+            plt.show()
+        except UnboundLocalError:
+            plt.imshow(image)
+            plt.show()
+            
     return(image, dic)
 
 
@@ -413,23 +416,26 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     img_blur = cv2.GaussianBlur(img_gray, (5,5), 0)
     
     # If the image is noised we will use the Sauvola detection thresholding
-    if NOISE == True: 
-        # Size of the local window for the Sauvola thresholding 
-        WINDOW_SIZE = 5 
-        # Apply Sauvola Thresholding
-        thresh_sauvola = threshold_sauvola(img_blur, window_size=WINDOW_SIZE)
+    if NOISE != False: 
+        # # Size of the local window for the Sauvola thresholding 
+        # WINDOW_SIZE = 5 
+        # # Apply Sauvola Thresholding
+        # thresh_sauvola = threshold_sauvola(img_blur, window_size=WINDOW_SIZE)
         
-        # Binarize the image
-        image_bin = img_blur < thresh_sauvola 
-        image_bin2 = np.ones((len(image_bin),len(image_bin[0])))
-        for i in range(len(image_bin)):
-            for j in range(len(image_bin[i])):
-                if image_bin[i][j] == False:
-                    image_bin2[i][j] = 0
-                else :
-                    image_bin2[i][j] = 255
-        image_bin = image_bin2.astype("uint8")
-    
+        # # Binarize the image
+        # image_bin = img_blur < thresh_sauvola 
+        # image_bin2 = np.ones((len(image_bin),len(image_bin[0])))
+        # for i in range(len(image_bin)):
+        #     for j in range(len(image_bin[i])):
+        #         if image_bin[i][j] == False:
+        #             image_bin2[i][j] = 0
+        #         else :
+        #             image_bin2[i][j] = 255
+        # image_bin = image_bin2.astype("uint8")
+        image_gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        # Binarize the image with the deterministic threshold
+        ret, image_bin = cv2.threshold(image_gray, 40, 255, cv2.THRESH_BINARY_INV)
+        
     # If the image is Wellue type we have determine the optimal threshold
     elif TYPE.lower() == "wellue":
         ret, image_bin = cv2.threshold(img_blur, 127, 255, cv2.THRESH_BINARY_INV)
@@ -454,7 +460,9 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
         # Compute the pikes position
         #peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.05*len(image)))[0] 
         peaksh, _ = find_peaks(horizontal_variance, height=len(image[0]), distance=int(len(image)/10))
-
+        # if NOISE != False:
+        #     peaksh, _ = find_peaks(horizontal_variance, height=(len(image)-(len(image[0])*15/100),len(image[0])), distance=int(len(image)/10))
+        
 
     
     if DEBUG == True:
@@ -497,7 +505,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     if DEBUG == True:
         plt.imshow(image)
         plt.axhline(cut_pos[-1], c = 'g', alpha = 0.6)
-        for p in peaks:
+        for p in peaksh:
             plt.axhline(p, c = 'r', alpha = 0.6)
         
     # Compute the vertical variance   
@@ -507,7 +515,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     peaksv = [] 
     for var in range(len(vertical_variance)):
         # If the variance is no null then there is a signal waveform a we must not cut here the signal
-        if vertical_variance[var] > 0 : 
+        if vertical_variance[var] > 200 : 
             # Pikes take the beggining position of the waveform
             peaksv.append(var)
     
@@ -707,6 +715,7 @@ def lead_extraction(dic_tracks, extraction_method, TYPE, NOISE, DEBUG = False):
             plt.imshow(image_bin)
             plt.show()
             plt.imshow(image_bin)
+            
                        
         
         # List of the extracted signal
