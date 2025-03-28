@@ -18,7 +18,7 @@ class ECGtizer:
     
     """
 
-    def __init__(self, file, dpi, Callback = None, extraction_method = "fragmented",typ = "", verbose = False, DEBUG = False):
+    def __init__(self, file, dpi, Callback = None, extraction_method = "full",typ = "", verbose = False, DEBUG = False):
         ### Variables ###
         self.file = file
         self.typ  = typ
