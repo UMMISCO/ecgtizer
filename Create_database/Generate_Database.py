@@ -545,3 +545,9 @@ def main(path_data = "ptb_xl/raw/physionet.org/files/ptb-xl/1.0.3/" , path_save 
         df_all_data.to_csv(path_save_xml + "ptbxl_database_4x4_test.csv", index=False)
     elif TYPE == 2:
         df_all_data.to_csv(path_save_xml + "ptbxl_database_6x2_test.csv", index=False)
+
+if __name__ == "__main__":
+    # Exécutez la fonction principale avec les chemins appropriés
+    main(path_data="ptb_xl/raw/physionet.org/files/ptb-xl/1.0.3/", 
+         path_save="ptb_xl/noised_images/temp/6x2/", 
+         path_save_xml="../../../../../data/ecg/db_projects/physionet/ptb_xl/noised_images/temp/", TYPE=2)
