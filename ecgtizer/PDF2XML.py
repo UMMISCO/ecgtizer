@@ -15,6 +15,7 @@ import base64
 
 
 
+
 def convert_PDF2image(path_input, DPI):
     
     """
@@ -776,6 +777,8 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
     # Dictionary with the lead   
     dic_leads       = {} 
     LEAD_LENGTH = 0
+    LEAD_NUMBER = 1
+    dic_association = {0 : "II"}
     # If the it is a classical format
     if TYPE.lower() == 'classic' or (TYPE.lower() == 'kardia' and FORMAT == 'multilead'):
         if TYPE.lower() != 'classic':
@@ -855,7 +858,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                 if f == 0:
                     f = 1
 
-                    
+                
                 # Define the beggining of lead part
                 LEAD_LENGTH = int(len(dic_tracks[t][ LENGTH_PULSE:  ]) / LEAD_NUMBER)
                 length = LENGTH_PULSE
@@ -878,7 +881,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                             it     += 1
                             if DEBUG == True:
                                 plt.axvline(length, c = 'r')
-                        except IndexError:
+                        except Exception as e:
                             length += int(len(dic_tracks[t][ LENGTH_PULSE:  ]) / LEAD_NUMBER)
                 else :
                     return(0)
@@ -907,11 +910,13 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                     length = 0
                     dic_leads[dic_association[t]] = dic_tracks[t][length:]
           
-        
-        for k in dic_leads:
-            zero_vector = np.zeros(5000)
-            zero_vector[dic_time[k][0]:dic_time[k][1]] = dic_leads[k]
-            dic_leads[k] = zero_vector
+        try:
+            for k in dic_leads:
+                zero_vector = np.zeros(5000)
+                zero_vector[dic_time[k][0]:dic_time[k][1]] = dic_leads[k]
+                dic_leads[k] = zero_vector
+        except Exception as e:
+            pass
         return(dic_leads)
     
     # If the format is not classic

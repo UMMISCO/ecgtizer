@@ -4,6 +4,7 @@ from .PDF2XML_mod import plot_function, write_xml, plot_overlay
 from .completion import completion_
 import cv2
 
+
 import numpy as np
 import time 
 
@@ -90,7 +91,7 @@ class ECGtizer:
             if Callback != None:
                 Callback("\t\t\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
             page = 0
-        elif file[-3:] == 'png' or file[-3:] == 'jpg':
+        elif file[-3:] == 'png' or file[-3:] == 'jpg' or file[-4:] == 'jpeg':
             if verbose == True:
                 print("\n")
                 print("--- Open Image : ", end='')
