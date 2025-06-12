@@ -5,7 +5,7 @@ import cv2
 from scipy import signal
 from scipy.signal import find_peaks
 import matplotlib.pyplot as plt
-import pytesseract
+#import pytesseract
 import re
 import pandas as pd
 
@@ -260,84 +260,84 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
                     rect = cv2.rectangle(im2, (x, y), (x + w, y + h), (255, 0, 0), 2) 
                     image[y:y + h, x:x + w] = np.mean(image[y:y + h, x:x + w])
         
-        if page == 0:
-            texte = pytesseract.image_to_string(image_bin)
-            texte_split = re.split(r'\s+|\n', texte)
-            it = 0
-            liste_put = ["ms", "/"]
-            for w in range(len(texte_split)):
+        # if page == 0:
+        #     texte = pytesseract.image_to_string(image_bin)
+        #     texte_split = re.split(r'\s+|\n', texte)
+        #     it = 0
+        #     liste_put = ["ms", "/"]
+        #     for w in range(len(texte_split)):
 
-                if it == 0:
-                    dic["Patient_ID"] = texte_split[w]
-                elif it == 1:
-                    dic["Patient_ID"] = dic["Patient_ID"]+texte_split[w]
+        #         if it == 0:
+        #             dic["Patient_ID"] = texte_split[w]
+        #         elif it == 1:
+        #             dic["Patient_ID"] = dic["Patient_ID"]+texte_split[w]
 
-                elif it == 2:
-                    dic["Date"] = texte_split[w]
-                elif it == 3:
-                    dic["Hour"] = texte_split[w]
-                elif texte_split[w] == 'ID:':
-                    dic["Base_ID"] = texte_split[w+1]
-                    liste_put.append(texte_split[w+1])
-                elif texte_split[w] == 'D-naiss:':
-                    dic["D_birth"] = texte_split[w+1]
-                    liste_put.append(texte_split[w+1])
-                elif texte_split[w] == 'Fréq.Vent:':
-                    dic["Vent. Freq."] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
-                elif texte_split[w] == 'PR:':
-                    dic["Int. PR"] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
-                elif texte_split[w] == 'Dur.QRS:':
-                    dic["QRS dur."] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
-                elif texte_split[w] == 'QT/QTc:':
-                    dic["QT"] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
-                    dic["QTc"] = texte_split[w+3] + "ms"
-                    liste_put.append(texte_split[w+3])
-                elif texte_split[w] == 'P-R-T:':
-                    dic["Axe P"] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
-                    dic["Axe R"] = texte_split[w+2] + "ms"
-                    liste_put.append(texte_split[w+2])
-                    dic["Axe T"] = texte_split[w+3] + "ms"
-                    liste_put.append(texte_split[w+3])
-                elif texte_split[w] == 'RR:':
-                    dic["Mean RR"] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
+        #         elif it == 2:
+        #             dic["Date"] = texte_split[w]
+        #         elif it == 3:
+        #             dic["Hour"] = texte_split[w]
+        #         elif texte_split[w] == 'ID:':
+        #             dic["Base_ID"] = texte_split[w+1]
+        #             liste_put.append(texte_split[w+1])
+        #         elif texte_split[w] == 'D-naiss:':
+        #             dic["D_birth"] = texte_split[w+1]
+        #             liste_put.append(texte_split[w+1])
+        #         elif texte_split[w] == 'Fréq.Vent:':
+        #             dic["Vent. Freq."] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
+        #         elif texte_split[w] == 'PR:':
+        #             dic["Int. PR"] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
+        #         elif texte_split[w] == 'Dur.QRS:':
+        #             dic["QRS dur."] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
+        #         elif texte_split[w] == 'QT/QTc:':
+        #             dic["QT"] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
+        #             dic["QTc"] = texte_split[w+3] + "ms"
+        #             liste_put.append(texte_split[w+3])
+        #         elif texte_split[w] == 'P-R-T:':
+        #             dic["Axe P"] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
+        #             dic["Axe R"] = texte_split[w+2] + "ms"
+        #             liste_put.append(texte_split[w+2])
+        #             dic["Axe T"] = texte_split[w+3] + "ms"
+        #             liste_put.append(texte_split[w+3])
+        #         elif texte_split[w] == 'RR:':
+        #             dic["Mean RR"] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
 
-                elif texte_split[w][-4:] == 'ans,':
-                    dic["age"] = texte_split[w] 
+        #         elif texte_split[w][-4:] == 'ans,':
+        #             dic["age"] = texte_split[w] 
 
-                elif texte_split[w] == 'Fem.' or texte_split[w] == 'Male':
-                    dic["sex"] = texte_split[w] 
+        #         elif texte_split[w] == 'Fem.' or texte_split[w] == 'Male':
+        #             dic["sex"] = texte_split[w] 
 
-                elif texte_split[w] == 'QTcB:':
-                    dic["QTcB"] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
-                elif texte_split[w] == 'QTcF:':
-                    dic["QTcF"] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
+        #         elif texte_split[w] == 'QTcB:':
+        #             dic["QTcB"] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
+        #         elif texte_split[w] == 'QTcF:':
+        #             dic["QTcF"] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
 
-                elif texte_split[w] == 'QTcF:':
-                    dic["QTcF"] = texte_split[w+1] + "ms"
-                    liste_put.append(texte_split[w+1])
-
-
-
-                else :
-                    if dic["Other"] == "Empty": 
-                        dic["Other"] = texte_split[w]
-                    else:
-                        if texte_split[w] not in liste_put:
-                            dic["Other"] = dic["Other"] + " " + texte_split[w]
+        #         elif texte_split[w] == 'QTcF:':
+        #             dic["QTcF"] = texte_split[w+1] + "ms"
+        #             liste_put.append(texte_split[w+1])
 
 
-                it +=1
+
+        #         else :
+        #             if dic["Other"] == "Empty": 
+        #                 dic["Other"] = texte_split[w]
+        #             else:
+        #                 if texte_split[w] not in liste_put:
+        #                     dic["Other"] = dic["Other"] + " " + texte_split[w]
 
 
-            df = pd.DataFrame(dic, index = [0]).T
+        #         it +=1
+
+
+        #     df = pd.DataFrame(dic, index = [0]).T
     # Plot the image with the detected rectangles
     if DEBUG == True:
         try:
@@ -349,8 +349,8 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
         except UnboundLocalError:
             plt.imshow(image)
             plt.show()
-            
-    return(image, dic)
+    return(image)       
+    #return(image, dic)
 
 
 

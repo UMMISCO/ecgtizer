@@ -138,9 +138,10 @@ class ECGtizer:
             if Callback != None:
                 Callback("--- Extract all the text from the image : ", end='')
                 start = time.time()
-            image_clean, df = text_extraction(self.image,page, dpi, NOISE, TYPE, DEBUG = DEBUG)
-            if page == 0:
-                self.df_patient = df
+            #image_clean, df = text_extraction(self.image,page, dpi, NOISE, TYPE, DEBUG = DEBUG)
+            image_clean = text_extraction(self.image,page, dpi, NOISE, TYPE, DEBUG = DEBUG)
+            #if page == 0:
+            #    self.df_patient = df
             image = image_clean
             if verbose == True:
                 print("\tOK ("+str(round(start - time.time(), 2)) + "sec) \n")
