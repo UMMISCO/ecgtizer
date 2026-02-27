@@ -111,7 +111,8 @@ class ECGtizer:
 
 
         ### Convert PDF files to image ###
-        if file[-3:] == 'pdf':
+        ext = file.lower().rsplit('.', 1)[-1] if '.' in file else ''
+        if ext == 'pdf':
             if verbose:
                 logger.info("Conversion PDF in image...")
                 start = time.time()
@@ -129,7 +130,7 @@ class ECGtizer:
             if Callback is not None:
                 Callback("\t\t\tOK ("+str(round(time.time() - start, 2)) + "sec) \n")
             page = 0
-        elif file[-3:] == 'png' or file[-3:] == 'jpg' or file[-4:] == 'jpeg':
+        elif ext in ('png', 'jpg', 'jpeg'):
             if verbose:
                 logger.info("Open Image...")
                 start = time.time()
@@ -137,6 +138,10 @@ class ECGtizer:
             page = 0
             if verbose:
                 logger.info("Open Image: OK (%.2fs)", time.time() - start)
+        else:
+            logger.error("Unsupported file format: .%s", ext)
+            self.good = False
+            return
 
         ### Convert all images ###
         for image in images:

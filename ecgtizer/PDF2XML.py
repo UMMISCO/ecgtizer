@@ -272,19 +272,21 @@ def text_extraction(image: np.ndarray, page: int, DPI: int, NOISE: bool | float,
         horizontal_variance = np.var(image_bin, axis = 1)
         # Detect the variance peaks
         peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(len(image)/10))[0] # Compute the pikes position
-        # starting position on the x-axis
-        x = 0
-        # Ending position on the x-axis
-        w = len(image[0])
-        # Starting position on the y-axis
-        y = 0
-        # Ending position on the y-axis
-        h = int(peaks[0] + (peaks[1]-peaks[0])/2)
-        im2 = image.copy()
-        # Define and apply a mask on the text region
-        rect = cv2.rectangle(image_bin, (x, peaks[0]), (x + w, y + h), (255, 0, 0), 2)
-        # The mask must have the same color as the rest of the image
-        image[y:y + h, x:x + w] = np.mean(image[y:y + h, x:x + w])
+        # Mask the text region if peaks were found
+        if len(peaks) >= 2:
+            # starting position on the x-axis
+            x = 0
+            # Ending position on the x-axis
+            w = len(image[0])
+            # Starting position on the y-axis
+            y = 0
+            # Ending position on the y-axis
+            h = int(peaks[0] + (peaks[1]-peaks[0])/2)
+            im2 = image.copy()
+            # Define and apply a mask on the text region
+            rect = cv2.rectangle(image_bin, (x, peaks[0]), (x + w, y + h), (255, 0, 0), 2)
+            # The mask must have the same color as the rest of the image
+            image[y:y + h, x:x + w] = np.mean(image[y:y + h, x:x + w])
         
     # If the image is not noised we apply a Otsu detection threshold    
     else:
@@ -461,27 +463,27 @@ def tracks_extraction(image: np.ndarray, TYPE: str, DPI: int, FORMAT: str, NOISE
     
             
     # For all the tracks we cut vertically the part which not contain waveform
-    for track in dic_tracks.keys(): 
-        dic_tracks[track] = dic_tracks[track][:,peaksv[0]:peaksv[-1]]
-    
-    # Plot the position of the cut in the image 
-    if DEBUG:
+    if peaksv:
+        v_start, v_end = peaksv[0], peaksv[-1]
+        for track in dic_tracks.keys():
+            dic_tracks[track] = dic_tracks[track][:, v_start:v_end]
+    else:
+        v_start = 0
+
+    # Plot the position of the cut in the image
+    if DEBUG and peaksv:
         plt.axvline(peaksv[0])
         plt.axvline(peaksv[-1])
         plt.savefig("Image_of_tracks.png")
         plt.show()
-        
-    if DEBUG:
+
         plt.plot(vertical_variance)
-        
-        
         plt.axvline(peaksv[0], c = "r")
         plt.axvline(peaksv[-1], c = "r")
         plt.savefig("Vertical_variance.png")
         plt.show()
-    
-    
-    return(dic_tracks, peaksh, peaksv[0])
+
+    return(dic_tracks, peaksh, v_start)
 
 
 
