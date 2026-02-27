@@ -103,9 +103,18 @@ Remove patient-identifying text from an ECG PDF:
 Command Line
 ------------
 
+After installation (``pip install ecgtizer``), the ``ecgtizer`` command is
+available:
+
 .. code-block:: bash
 
-   python ECGtizer_main.py "ecg.pdf" 500 "fragmented" --verbose "output.xml"
+   ecgtizer ecg.pdf 500 fragmented output.xml --verbose
+
+   # Force a specific ECG format
+   ecgtizer ecg.png 300 full output.xml --type kardia
+
+   # Show help
+   ecgtizer --help
 
 
 Real-World Workflows

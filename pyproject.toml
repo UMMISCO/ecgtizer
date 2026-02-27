@@ -41,6 +41,9 @@ dependencies = [
     "pyCompare",
 ]
 
+[project.scripts]
+ecgtizer = "ecgtizer.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/your-org/ecgtizer"
 Documentation = "https://github.com/your-org/ecgtizer#readme"
