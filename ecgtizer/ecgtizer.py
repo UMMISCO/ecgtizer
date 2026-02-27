@@ -78,18 +78,18 @@ class ECGtizer:
             if verbose:
                 logger.info("Conversion PDF in image...")
                 start = time.time()
-            if Callback != None:
+            if Callback is not None:
                 Callback("\n")
                 Callback("--- Conversion PDF in image : ", end='')
                 start = time.time()
             images, page_number, _ = convert_PDF2image(file, DPI = dpi)
-            if _ == False:
+            if not _:
                 self.good = False
                 return(None)
             self.all_image = images
             if verbose:
                 logger.info("Conversion PDF in image: OK (%.2fs)", time.time() - start)
-            if Callback != None:
+            if Callback is not None:
                 Callback("\t\t\tOK ("+str(round(time.time() - start, 2)) + "sec) \n")
             page = 0
         elif file[-3:] == 'png' or file[-3:] == 'jpg' or file[-4:] == 'jpeg':
@@ -110,7 +110,7 @@ class ECGtizer:
             if verbose:
                 logger.info("Check Quality and Type of image...")
                 start = time.time()
-            if Callback != None:
+            if Callback is not None:
                 Callback("--- Check Quality and Type of image : ", end='')
                 start = time.time()
             self.image = np.array(image)
@@ -127,7 +127,7 @@ class ECGtizer:
                 FORMAT = ''
             if verbose:
                 logger.info("Check Quality and Type of image: OK (%.2fs)", time.time() - start)
-            if Callback != None:
+            if Callback is not None:
                 Callback("\t\tOK ("+str(round(time.time() - start, 2)) + "sec) \n")
 
             ### b/ Check the image type ###
@@ -135,7 +135,7 @@ class ECGtizer:
                 logger.info("TYPE: %s", TYPE)
                 logger.info("Extract all the text from the image...")
                 start = time.time()
-            if Callback != None:
+            if Callback is not None:
                 Callback("--- Extract all the text from the image : ", end='')
                 start = time.time()
             #image_clean, df = text_extraction(self.image,page, dpi, NOISE, TYPE, DEBUG = DEBUG)
@@ -145,14 +145,14 @@ class ECGtizer:
             image = image_clean
             if verbose:
                 logger.info("Extract all the text from the image: OK (%.2fs)", time.time() - start)
-            if Callback != None:
+            if Callback is not None:
                 Callback("\tOK ("+str(round(time.time() - start, 2)) + "sec) \n")
 
             ### c/ Extract each tracks ###
             if verbose:
                 logger.info("Detect tracks position...")
                 start = time.time()
-            if Callback != None:
+            if Callback is not None:
                 Callback("--- Detect tracks position : ", end='')
                 start = time.time()
             dic_tracks, varianceh, variancev = tracks_extraction(self.image, TYPE, dpi, FORMAT, DEBUG = DEBUG, NOISE = NOISE)
@@ -161,7 +161,7 @@ class ECGtizer:
             self.dic_tracks = dic_tracks
             if verbose:
                 logger.info("Detect tracks position: OK (%.2fs)", time.time() - start)
-            if Callback != None:
+            if Callback is not None:
                 Callback("\t\t\tOK ("+str(round(time.time() - start, 2)) + "sec) \n")
 
             ### c/ Clean the tracks from outliers ###
@@ -179,7 +179,7 @@ class ECGtizer:
             if verbose:
                 logger.info("Tracks extraction...")
                 start = time.time()
-            if Callback != None:
+            if Callback is not None:
                 Callback("--- Tracks extraction : ", end='')
                 start = time.time()
             dic_tracks_ex, image_bin, dic_tracks_ex_not_scale = lead_extraction(dic_tracks, extraction_method, TYPE, NOISE = NOISE, DEBUG = DEBUG )
@@ -188,7 +188,7 @@ class ECGtizer:
             self.dic_tracks_ex_not_scale = dic_tracks_ex_not_scale
             if verbose:
                 logger.info("Tracks extraction: OK (%.2fs)", time.time() - start)
-            if Callback != None:
+            if Callback is not None:
                 Callback("\t\t\tOK ("+str(round(time.time() - start, 2)) + "sec) \n")
 
 
@@ -196,13 +196,13 @@ class ECGtizer:
             if verbose:
                 logger.info("Lead detection...")
                 start = time.time()
-            if Callback != None:
+            if Callback is not None:
                 Callback("--- Lead detection : ", end='')
                 start = time.time()
             dic_lead = lead_cutting(dic_tracks_ex, dpi,TYPE, FORMAT, page, NOISE = NOISE,  DEBUG = DEBUG )
             if verbose:
                 logger.info("Lead detection: OK (%.2fs)", time.time() - start)
-            if Callback != None:
+            if Callback is not None:
                 Callback("\t\t\t\tOK ("+str(round(time.time() - start, 2)) + "sec) \n")
 
 
@@ -241,7 +241,7 @@ class ECGtizer:
     ### Plot the signal Extracted ###
 
     def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False, transparent = False, completion = False):
-        if completion == False:
+        if not completion:
             plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
         else:
             plot_function(lead_all = self.extracted_lead_comp, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)

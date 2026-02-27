@@ -77,9 +77,9 @@ def alignement(lead1, lead2):
 
 
 def analyse(file1, file2):
-    if type(file1) == str:
+    if isinstance(file1, str):
         file1 = read_xml(file1)
-    if type(file2) == str:
+    if isinstance(file2, str):
         file2 = read_xml(file2)
     
     res_matrix_cor = {}
@@ -102,9 +102,9 @@ def analyse(file1, file2):
 
 
 def BlandAltman(file1, file2, lead = '', save = False):
-    if type(file1) == str:
+    if isinstance(file1, str):
         file1 = read_xml(file1)
-    if type(file2) == str:
+    if isinstance(file2, str):
         file2 = read_xml(file2)
     
     
@@ -113,14 +113,14 @@ def BlandAltman(file1, file2, lead = '', save = False):
         for l in file1:
             if l != 'ref':
                 l1, l2 = alignement(file1[l], file2[l])
-                if save == False:
+                if not save:
                     pyCompare.blandAltman(l1, l2, title = 'Bland-Altman Plot for lead ' + l, pointColour = '#440154', meanColour = '#5ec962', loaColour = '#fde725' )
                 else:
                     pyCompare.blandAltman(l1, l2, title = 'Bland-Altman Plot for lead ' + l, savePath = save + l + '.png', pointColour = '#440154', meanColour = '#5ec962', loaColour = '#fde725')
     else:
         
         l1, l2 = alignement(file1[lead], file2[lead])
-        if save == False:
+        if not save:
             pyCompare.blandAltman(l1, l2, title = 'Bland-Altman Plot for lead ' + lead, pointColour = '#440154', meanColour = '#5ec962', loaColour = '#fde725')
         else:
             pyCompare.blandAltman(l1, l2, title = 'Bland-Altman Plot for lead ' + lead, savePath = save + lead + '.png', pointColour = '#440154', meanColour = '#5ec962', loaColour = '#fde725')
@@ -136,9 +136,9 @@ def compute_slope(l1, l2):
     return(slope)
     
 def scatter_plot(file1, file2, lead = '', save = False):
-    if type(file1) == str:
+    if isinstance(file1, str):
         file1 = read_xml(file1)
-    if type(file2) == str:
+    if isinstance(file2, str):
         file2 = read_xml(file2)
     
     if lead == '':
@@ -163,7 +163,7 @@ def scatter_plot(file1, file2, lead = '', save = False):
                 plt.title ('Scatter Plot for lead ' + l)
                 plt.xlabel('Extracted lead')
                 plt.ylabel('True lead')
-                if save != False:
+                if save:
                     plt.savefig(save + '_' + l + '.png')
                 plt.show()
     else:
@@ -185,15 +185,15 @@ def scatter_plot(file1, file2, lead = '', save = False):
         plt.scatter(l1, l2, color = '#440154', s = 3)
         plt.xlabel('Extracted lead')
         plt.ylabel('True lead')
-        if save != False:
+        if save:
             plt.savefig(save + '_' + lead + '.png')
         plt.show()
     
     
 def overlap_plot(file1, file2, lead = '', save = False):
-    if type(file1) == str:
+    if isinstance(file1, str):
         file1 = read_xml(file1)
-    if type(file2) == str:
+    if isinstance(file2, str):
         file2 = read_xml(file2)
     
     if lead == '':
@@ -208,7 +208,7 @@ def overlap_plot(file1, file2, lead = '', save = False):
                 plt.xlabel('True lead')
                 plt.ylabel('Extracted lead')
                 plt.legend()
-                if save != False:
+                if save:
                     plt.savefig(save + '_' + l + '.png')
                 plt.show()
     else:
@@ -223,7 +223,7 @@ def overlap_plot(file1, file2, lead = '', save = False):
         plt.xlabel('True lead')
         plt.ylabel('Extracted lead')
         plt.legend()
-        if save != False:
+        if save:
             plt.savefig(save + '_' + l + '.png')
         plt.show()
     

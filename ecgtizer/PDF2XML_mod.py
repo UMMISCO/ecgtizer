@@ -99,7 +99,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, 
                         axs[dic_pos[i][0]].set_ylabel('Amplitude µV')
                 
             fig.tight_layout()
-            if save != False:
+            if save:
                 name = save
                 a = 1
                 while os.path.exists(name):
@@ -130,7 +130,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, 
         plt.title('ECG from ' + str(int(b/500)) +'sec to '+str(int(e/500))+'sec')
         plt.xlabel('Time (1/500)sec')
         plt.ylabel('Amplitude µV')
-        if save != False:
+        if save:
             name = save
             a = 1
             while os.path.exists(name):

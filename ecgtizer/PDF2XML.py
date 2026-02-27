@@ -108,7 +108,7 @@ def check_noise_type(image, DPI, DEBUG):
                 rect = cv2.rectangle(im2, (x, y), (x + w, y + h), (255, 0, 0), 2) 
                 nbr +=1
         # Plot the image with the different rectangle(s) find
-        if DEBUG == True:
+        if DEBUG:
             try:
                 plt.figure(figsize = (20,14))
                 plt.imshow(rect)
@@ -174,7 +174,7 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
             if var_column[i] < 200:
                 working_image[:,i] = 0
         
-        if DEBUG == True:
+        if DEBUG:
             plt.figure(figsize = (20,14))
             plt.imshow(working_image)
             plt.show()
@@ -188,7 +188,7 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
     # Apply a Gaussian Blur
     image_blur = cv2.GaussianBlur(image_gray, (5,5), 0) 
     # If the image is noised we apply a deterministic threshold
-    if NOISE == True or NOISE == 0.5: 
+    if NOISE:
         # Binarize the image with the deterministic threshold
         ret, image_bin = cv2.threshold(image_gray, 40, 100, cv2.THRESH_BINARY_INV)
         # Compute the horizontal variance
@@ -238,7 +238,7 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
                     image[y:y + h, x:x + w] = np.mean(image[y:y + h, x:x + w])
         
     # Plot the image with the detected rectangles
-    if DEBUG == True:
+    if DEBUG:
         try:
             plt.figure(figsize = (20,14))
             plt.imshow(rect)
@@ -292,21 +292,21 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
                 if i%2 == 0:
                     dic_tracks_temp[it] = dic_tracks[i]
                     it+=1
-            if DEBUG == True:
+            if DEBUG:
                 for im in dic_tracks_temp:
                     plt.imshow(dic_tracks_temp[im])
                     plt.show()
             return(dic_tracks_temp)
         
         else: 
-            if DEBUG == True:
+            if DEBUG:
                 for im in dic_tracks:
                     plt.imshow(dic_tracks[im])
                     plt.show()
             return(dic_tracks)
     
     # Plot the original image 
-    if DEBUG == True:
+    if DEBUG:
         plt.figure(figsize = (20,14))
     
     # Convert the image in gray scale 
@@ -315,7 +315,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     img_blur = cv2.GaussianBlur(img_gray, (5,5), 0)
     
     # If the image is noised we will use the Sauvola detection thresholding
-    if NOISE != False: 
+    if NOISE: 
         # # Size of the local window for the Sauvola thresholding 
         # WINDOW_SIZE = 5 
         # # Apply Sauvola Thresholding
@@ -359,12 +359,12 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
         # Compute the pikes position
         #peaks = signal.argrelextrema(horizontal_variance, np.greater, order = int(0.05*len(image)))[0] 
         peaksh, _ = find_peaks(horizontal_variance, height=len(image[0]), distance=int(len(image)/10))
-        # if NOISE != False:
+        # if NOISE:
         #     peaksh, _ = find_peaks(horizontal_variance, height=(len(image)-(len(image[0])*15/100),len(image[0])), distance=int(len(image)/10))
         
 
     
-    if DEBUG == True:
+    if DEBUG:
         plt.plot(horizontal_variance)
         for p in peaksh:
             plt.axvline(p, c = "r")
@@ -397,11 +397,11 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
             
         it+=1
         
-        if DEBUG == True:
+        if DEBUG:
             plt.axhline(cut_pos[c], c = 'g', alpha = 0.6)
             
     # Plot the position of the cut in the image 
-    if DEBUG == True:
+    if DEBUG:
         plt.imshow(image)
         plt.axhline(cut_pos[-1], c = 'g', alpha = 0.6)
         for p in peaksh:
@@ -425,13 +425,13 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
         dic_tracks[track] = dic_tracks[track][:,peaksv[0]:peaksv[-1]]
     
     # Plot the position of the cut in the image 
-    if DEBUG == True:
+    if DEBUG:
         plt.axvline(peaksv[0])
         plt.axvline(peaksv[-1])
         plt.savefig("Image_of_tracks.png")
         plt.show()
         
-    if DEBUG == True:
+    if DEBUG:
         plt.plot(vertical_variance)
         
         
@@ -488,7 +488,7 @@ def clean_tracks(dic_tracks, TYPE, NOISE, DEBUG):
                     image_bin2 = np.ones((len(image_bin),len(image_bin[0])))
                     for i in range(len(image_bin)):
                         for j in range(len(image_bin[i])):
-                            if image_bin[i][j] == False:
+                            if not image_bin[i][j]:
                                 image_bin2[i][j] = 0
                             else :
                                 image_bin2[i][j] = 255
@@ -521,7 +521,7 @@ def clean_tracks(dic_tracks, TYPE, NOISE, DEBUG):
                 dic_tracks[d][y:y + h, x:x + w] = np.mean(dic_tracks[d][y:y + h, x:x + w])
 
         # Plot the image and the associated masks
-        if DEBUG == True:
+        if DEBUG:
             plt.figure(figsize = (20,14))
             try:
                 plt.imshow(rect)
@@ -610,7 +610,7 @@ def lead_extraction(dic_tracks, extraction_method, TYPE, NOISE, DEBUG = False):
         # Kardia Files are already binarize
         image_bin = dic_tracks[d]
         # Plot the binarized image
-        if DEBUG == True:
+        if DEBUG:
             plt.imshow(image_bin)
             plt.show()
             plt.imshow(image_bin)
@@ -646,7 +646,7 @@ def lead_extraction(dic_tracks, extraction_method, TYPE, NOISE, DEBUG = False):
         
         
         # Plot the signal before its scale
-        if DEBUG == True:
+        if DEBUG:
             plt.plot(signal, c = 'r')
             plt.show()    
             
@@ -730,7 +730,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
         
         # Plot each tracks
         for t in dic_tracks:
-            if DEBUG == True:
+            if DEBUG:
                 LENGTH_PULSE = 140
                 logger.debug("Track: %s", t)
                 plt.figure(figsize = (20,14))
@@ -767,7 +767,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                 # special case on the disposition 4x4 the last track containe 10sec of the lead II
                 if len(dic_tracks) == 4 and t == 3: 
                     dic_leads['IIc'] = (((pixel_zero - dic_tracks[t][LENGTH_PULSE: 4 * LEAD_LENGTH+LENGTH_PULSE])/f) * 1000)
-                    if DEBUG == True:
+                    if DEBUG:
                         plt.show()
 
                 # extract each lead from the tracks
@@ -777,13 +777,13 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                             dic_leads[dic_association[t][it]] = (((pixel_zero - dic_tracks[t][length : length + LEAD_LENGTH]) / f) * 1000) # We fill the leads dictionnary with the name of the lead and the image of it
                             length += int(len(dic_tracks[t][ LENGTH_PULSE:  ]) / LEAD_NUMBER)
                             it     += 1
-                            if DEBUG == True:
+                            if DEBUG:
                                 plt.axvline(length, c = 'r')
                         except Exception as e:
                             length += int(len(dic_tracks[t][ LENGTH_PULSE:  ]) / LEAD_NUMBER)
                 else :
                     return(0)
-                if DEBUG == True:
+                if DEBUG:
                     plt.show()
        
             else:
@@ -832,7 +832,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
         for t in dic_tracks:
             if t == 0 :
                 # Plot each tracks
-                if DEBUG == True:
+                if DEBUG:
                     plt.figure(figsize = (20,14))
                     plt.plot(dic_tracks[t])     
                     plt.axvline(LENGTH_PULSE, c = 'r')
@@ -864,7 +864,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                 all_signal = np.concatenate((all_signal,dic_tracks[t]+dist), axis = 0)
             
             # Plot the different pixel  
-            if DEBUG == True:
+            if DEBUG:
                 logger.debug("0: %s", pixel_zero)
                 logger.debug("1: %s", pixel_one)
                 logger.debug("1st pixel: %s", all_signal[0])

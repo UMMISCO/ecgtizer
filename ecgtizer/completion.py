@@ -234,7 +234,7 @@ def replace_random(array, True_data = False):
     
     final_matrix = np.random.random((1,12,512))
     array, scale = normalization(array)
-    if True_data == False:
+    if not True_data:
         for i in range(12):
             final_matrix[0,i,dic_split[i][0]: dic_split[i][1]] = array[dic_split[i][0]: dic_split[i][1],i]
     else:
