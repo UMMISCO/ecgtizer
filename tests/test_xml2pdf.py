@@ -184,3 +184,88 @@ class TestWritePDF:
         relpath = os.path.relpath(outpath)
         Write_PDF(sample_csv_ecg, relpath, type_of_pdf="type2")
         assert os.path.exists(outpath)
+
+
+# --- read_xml tests ---
+
+SAMPLE_XML_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "PTB-XL", "Digitized")
+
+
+class TestReadXml:
+
+    @pytest.fixture
+    def sample_xml_path(self):
+        path = os.path.join(SAMPLE_XML_DIR, "00121_hr.xml")
+        if not os.path.exists(path):
+            pytest.skip("Sample XML data not available")
+        return path
+
+    def test_returns_dict(self, sample_xml_path):
+        from ecgtizer.XML2PDF import read_xml
+        result = read_xml(sample_xml_path)
+        assert isinstance(result, dict)
+
+    def test_has_standard_leads(self, sample_xml_path):
+        from ecgtizer.XML2PDF import read_xml
+        result = read_xml(sample_xml_path)
+        for lead in ["I", "II", "III", "AVR", "AVL", "AVF"]:
+            assert lead in result, f"Missing lead: {lead}"
+
+    def test_leads_are_numpy_arrays(self, sample_xml_path):
+        from ecgtizer.XML2PDF import read_xml
+        result = read_xml(sample_xml_path)
+        for lead_name, lead_data in result.items():
+            assert isinstance(lead_data, np.ndarray), f"Lead {lead_name} is not ndarray"
+
+    def test_lead_length_positive(self, sample_xml_path):
+        from ecgtizer.XML2PDF import read_xml
+        result = read_xml(sample_xml_path)
+        for lead_name, lead_data in result.items():
+            assert len(lead_data) > 0, f"Lead {lead_name} is empty"
+
+
+# --- xml_to_pdf end-to-end tests ---
+
+
+class TestXmlToPdf:
+
+    @pytest.fixture
+    def sample_xml_path(self):
+        path = os.path.join(SAMPLE_XML_DIR, "00121_hr.xml")
+        if not os.path.exists(path):
+            pytest.skip("Sample XML data not available")
+        return path
+
+    def test_xml_to_pdf_type1(self, sample_xml_path, tmp_output_dir):
+        from ecgtizer.XML2PDF import xml_to_pdf
+        outpath = os.path.join(tmp_output_dir, "xml_type1.pdf")
+        relpath = os.path.relpath(outpath)
+        xml_to_pdf(sample_xml_path, relpath, type_of_pdf="type1")
+        assert os.path.exists(outpath)
+        assert os.path.getsize(outpath) > 1000
+
+    def test_xml_to_pdf_type2(self, sample_xml_path, tmp_output_dir):
+        from ecgtizer.XML2PDF import xml_to_pdf
+        outpath = os.path.join(tmp_output_dir, "xml_type2.pdf")
+        relpath = os.path.relpath(outpath)
+        xml_to_pdf(sample_xml_path, relpath, type_of_pdf="type2")
+        assert os.path.exists(outpath)
+        assert os.path.getsize(outpath) > 1000
+
+    def test_xml_to_pdf_default_type(self, sample_xml_path, tmp_output_dir):
+        from ecgtizer.XML2PDF import xml_to_pdf
+        outpath = os.path.join(tmp_output_dir, "xml_default.pdf")
+        relpath = os.path.relpath(outpath)
+        xml_to_pdf(sample_xml_path, relpath)
+        assert os.path.exists(outpath)
+
+    def test_completed_xml_to_pdf(self, tmp_output_dir):
+        """Test with a completed XML file (if available)."""
+        path = os.path.join(SAMPLE_XML_DIR, "00121_hr_completed.xml")
+        if not os.path.exists(path):
+            pytest.skip("Completed XML data not available")
+        from ecgtizer.XML2PDF import xml_to_pdf
+        outpath = os.path.join(tmp_output_dir, "xml_completed.pdf")
+        relpath = os.path.relpath(outpath)
+        xml_to_pdf(path, relpath, type_of_pdf="type1")
+        assert os.path.exists(outpath)

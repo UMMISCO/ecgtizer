@@ -636,7 +636,14 @@ def xml_to_pdf(path_input: str, path_output: str, type_of_pdf: str = 'type1') ->
         Layout: ``"type1"`` (3x4) or ``"type2"`` (6x2). Defaults to ``"type1"``.
     """
     ecg = read_xml(path_input)
-    Write_PDF (ecg, path_output, type_of_pdf)
+    # For type1 (3x4), the rhythm strip needs the full lead II signal
+    lead_IIc = ""
+    if type_of_pdf == "type1":
+        for k in ("II", "IIc"):
+            if k in ecg:
+                lead_IIc = ecg[k]
+                break
+    Write_PDF(ecg, path_output, type_of_pdf, lead_IIc=lead_IIc)
     
                 
                 
