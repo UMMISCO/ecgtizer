@@ -152,7 +152,7 @@ def get_frequency(header):
                     frequency = float(frequency.split('/')[0])
                 else:
                     frequency = float(frequency)
-            except:
+            except (ValueError, IndexError):
                 pass
         else:
             break
@@ -171,7 +171,7 @@ def get_adc_gains(header, leads):
                 j = leads.index(current_lead)
                 try:
                     adc_gains[j] = float(entries[2].split('/')[0])
-                except:
+                except (ValueError, IndexError):
                     pass
         else:
             break
