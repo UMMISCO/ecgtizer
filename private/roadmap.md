@@ -9,11 +9,11 @@
 - [x] Add comprehensive test suite (137 tests: unit + integration)
 
 ## Phase 2 — Code Quality (P1)
-- [ ] Replace `print()` with `logging` module across codebase
-- [ ] Remove dead code (commented Pytesseract, unused imports)
-- [ ] Fix bare except clauses in `helper_functions.py`
-- [ ] Fix wildcard import in `PDF2XML.py`
-- [ ] Fix boolean comparison anti-patterns (`== True`, `!= False`)
+- [x] Replace `print()` with `logging` module across codebase
+- [x] Remove dead code (commented Pytesseract, unused imports: io, base64, re, pandas)
+- [x] Fix bare except clauses in `helper_functions.py`
+- [x] Fix wildcard import in `PDF2XML.py` → explicit imports
+- [x] Fix boolean comparison anti-patterns (`== True`, `!= False`, `!= None`, `type() ==`)
 - [ ] Clean up `PDF2XML_mod.py` inconsistent variable naming
 
 ## Phase 3 — Performance & Style (P2)
@@ -49,3 +49,4 @@
 | Date | Branch | What was done |
 |------|--------|---------------|
 | 2026-02-27 | fix/foundation-cleanup | Phase 1 complete: .gitignore, cElementTree fix, setup.py deps, Python 3.9+ bump, Generate_Database fix, 137 tests added |
+| 2026-02-27 | fix/foundation-cleanup | Phase 2 (5/6): logging module, dead code removal, bare excepts, wildcard imports, boolean anti-patterns |
