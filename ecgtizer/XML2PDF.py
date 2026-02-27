@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Parses an ECG file produced by the Contec ECG90A electrocardiograph
-and produces a graph in PDF (vector) or PNG (raster) format.
+"""XML-to-PDF ECG rendering module.
 
-Required custom modules: ecg_contec.py, which requires ecg_scp.py
-Required Python packages: python3-numpy python3-scipy python3-reportlab
+Reads HL7 aECG XML files and produces publication-quality 12-lead ECG
+plots in PDF (vector) or PNG (raster) format, including grid paper,
+lead labels, patient metadata, and optional notch filtering.
 """
 from __future__ import annotations
 

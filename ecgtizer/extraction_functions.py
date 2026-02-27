@@ -1,3 +1,11 @@
+"""Waveform extraction algorithms for binarized ECG track images.
+
+Three strategies with different speed/accuracy trade-offs:
+
+* **lazy** -- fast, noise-tolerant, but smooths peaks.
+* **full** -- fast, high fidelity, but may include annotation artifacts.
+* **fragmented** -- slower, highest fidelity via contour detection.
+"""
 from __future__ import annotations
 
 import numpy as np

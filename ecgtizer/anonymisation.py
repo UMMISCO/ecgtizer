@@ -1,3 +1,9 @@
+"""ECG PDF anonymization utility.
+
+Detects and masks patient-identifying text regions in ECG PDF documents
+using morphological operations, then re-exports the cleaned image as a
+new PDF file.
+"""
 import sys
 
 from .PDF2XML import convert_PDF2image

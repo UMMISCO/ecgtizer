@@ -1,3 +1,9 @@
+"""Core image-processing pipeline for ECG digitization.
+
+Converts PDF/image ECGs into numerical signal arrays through noise detection,
+adaptive binarization, track segmentation, waveform extraction and amplitude
+calibration using a reference pulse.
+"""
 from __future__ import annotations
 
 import logging

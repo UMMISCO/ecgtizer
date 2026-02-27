@@ -1,3 +1,9 @@
+"""Plotting, XML serialization and signal utility functions.
+
+Provides helpers for visualizing extracted ECG leads, overlaying waveforms
+on the source image, converting signals to text, and writing the HL7 aECG
+XML output.
+"""
 from __future__ import annotations
 
 import logging

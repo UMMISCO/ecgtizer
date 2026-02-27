@@ -1,3 +1,9 @@
+"""Signal comparison and statistical analysis tools.
+
+Provides DTW-based alignment, correlation metrics, Bland-Altman agreement
+plots, scatter plots with linear regression, and overlap visualizations
+for comparing digitized ECG signals against original recordings.
+"""
 from __future__ import annotations
 
 import logging

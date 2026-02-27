@@ -1,3 +1,10 @@
+"""Main ECGtizer class for PDF/image ECG digitization.
+
+Provides the :class:`ECGtizer` entry point that orchestrates the full
+pipeline: PDF-to-image conversion, noise detection, text extraction,
+track segmentation, waveform extraction, lead calibration, and optional
+deep-learning completion.
+"""
 from __future__ import annotations
 
 #Modules

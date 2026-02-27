@@ -1,3 +1,9 @@
+"""Deep-learning lead completion module.
+
+Uses a 1-D / 2-D convolutional autoencoder to extend partial ECG leads
+(2.5 s or 5 s recordings) to the full 10-second duration.  Includes
+normalization helpers, model loading, and the main completion entry point.
+"""
 from __future__ import annotations
 
 import torch.nn as nn
