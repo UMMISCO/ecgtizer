@@ -28,18 +28,13 @@ def lazy_extraction(image_bin: np.ndarray) -> list[int]:
     list[int]
         Vertical pixel positions representing the extracted waveform.
     """
-    # We define a starting pixel which corresponds to our anchor point - the extraction will start from this point
-    # We look for all the lit pixels in the first column and average over them
-    first_pixel_position = []
-    for j in range(len(image_bin)):
-        if image_bin[j,0] == 255:
-            first_pixel_position.append(j)
-    try:
-        anchor = int(np.mean(first_pixel_position))
-        signal = [anchor]
-    except ValueError:
-        anchor = int(len(image_bin)/2)
-        signal = [anchor]
+    # Find anchor point: average of all lit pixels in the first column
+    first_col_lit = np.where(image_bin[:, 0] == 255)[0]
+    if len(first_col_lit) > 0:
+        anchor = int(np.mean(first_col_lit))
+    else:
+        anchor = image_bin.shape[0] // 2
+    signal = [anchor]
 
     # We then go through the image column by column, looking for the lit pixel closest to the anchor pixel.
     for i in range(1,len(image_bin[0])):
@@ -81,8 +76,14 @@ def full_extraction(image_bin: np.ndarray) -> np.ndarray:
     numpy.ndarray
         Mean vertical positions per column.
     """
-    # We look at all the columns in the image and average the position of the lit pixels
-    extraction = np.array([sum(i for i, valeur in enumerate(ligne) if valeur == 255) / (ligne.count(255)+0.01) for ligne in image_bin.T.tolist()])
+    # Vectorized: mean row position of lit pixels per column
+    mask = image_bin == 255
+    row_indices = np.arange(image_bin.shape[0], dtype=float)
+    # Weighted sum of row indices where mask is True, per column
+    weighted_sum = np.dot(row_indices, mask)           # shape: (width,)
+    count = mask.sum(axis=0).astype(float)             # shape: (width,)
+    # Avoid division by zero: where no lit pixels, return 0.0
+    extraction = np.divide(weighted_sum, count, out=np.zeros(image_bin.shape[1]), where=count > 0)
     return extraction
 
 
@@ -104,32 +105,28 @@ def fragmented_extraction(image_bin: np.ndarray) -> list[float]:
     list[float]
         Mean vertical positions per column (from the signal fragment).
     """
-    # Look at all the columns in the image and store the lit pixels.
-    # if there's a gap between two lit pixels, we store them in a new list
-    midpoint = len(image_bin) / 2
-    signal = []
-    for i in range(len(image_bin[0])):
-        positions = np.where(image_bin[:,i] == 255)[0]
-        # No lit pixels in this column — use previous value or midpoint
+    # Extract the signal fragment per column using vectorized grouping.
+    h, w = image_bin.shape
+    midpoint = h / 2.0
+    signal = np.full(w, midpoint)
+
+    for i in range(w):
+        positions = np.where(image_bin[:, i] == 255)[0]
         if len(positions) == 0:
-            signal.append(signal[-1] if signal else midpoint)
+            signal[i] = signal[i - 1] if i > 0 else midpoint
             continue
-        # Group consecutive lit pixels into fragments
-        matrix = []
-        sub_list = [positions[0]]
-        for j in range(1, len(positions)):
-            if positions[j] == positions[j - 1] + 1:
-                sub_list.append(positions[j])
-            else:
-                matrix.append(sub_list)
-                sub_list = [positions[j]]
-        matrix.append(sub_list)
-        # The last fragment is assumed to be the signal (first fragments are text labels)
-        if len(matrix) > 1:
-            signal.append(np.mean(matrix[-1]))
+        if len(positions) == 1:
+            signal[i] = float(positions[0])
+            continue
+        # Split into fragments at gaps (consecutive diff > 1)
+        breaks = np.where(np.diff(positions) > 1)[0] + 1
+        if len(breaks) == 0:
+            # Single contiguous fragment
+            signal[i] = np.mean(positions)
         else:
-            signal.append(np.mean(matrix[0]))
-    return signal
+            # Last fragment is the signal (first fragments are text labels)
+            signal[i] = np.mean(positions[breaks[-1]:])
+    return signal.tolist()
 
 
 

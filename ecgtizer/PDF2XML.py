@@ -147,26 +147,22 @@ def check_noise_type(image: np.ndarray, DPI: int, DEBUG: bool) -> tuple[str, boo
     bool : True: The image is noised / False : The image is not noised
     """
     
-    # Check the color diversity
-    liste = []
-    for i in range(len(image)):
-        #for j in range(len(image[i])):
-            if image[i][int(len(image[i])/2)][1] not in liste and image[i][int(len(image[i])/2)][0] == 255 or image[i][int(len(image[i])/2)][2] not in liste and image[i][int(len(image[i])/2)][0] :
-                liste.append(image[i][int(len(image[i])/2)][1])
-                
-    # Kardia format is in black and white
-    if len(liste) == 1:
-        return("Kardia", False)
-    
-    # Check the variance in the image 
-    if np.var(image) > VARIANCE_HIGH or np.var(image) < VARIANCE_LOW:
-        if np.var(image) > VARIANCE_NOISY:
+    # Check color diversity along the middle column (vectorized)
+    mid_col = image[:, image.shape[1] // 2, :]          # shape: (H, 3)
+    # Kardia: only one unique green-channel value in rows where R==255 or B is truthy
+    mask = (mid_col[:, 0] == 255) | (mid_col[:, 2] != 0)
+    unique_colors = np.unique(mid_col[mask, 1]) if np.any(mask) else np.array([])
+    if len(unique_colors) <= 1:
+        return ("Kardia", False)
+
+    # Check the variance in the image (compute once)
+    image_var = np.var(image)
+    if image_var > VARIANCE_HIGH or image_var < VARIANCE_LOW:
+        if image_var > VARIANCE_NOISY:
             NOISE = True
         else:
             NOISE = NOISE_PARTIAL
-    
     else:
-        # below a variance of 600 the image is considered noisy  
         NOISE = False
 
     if len(image) > len(image[0]):
