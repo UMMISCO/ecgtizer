@@ -1,9 +1,13 @@
+import logging
+
 import xmltodict as xml
 from scipy.stats import pearsonr
 from fastdtw import fastdtw
 import numpy as np
 import pyCompare
 import matplotlib.pyplot as plt
+
+logger = logging.getLogger(__name__)
 
 def read_lead(lead_str):
     lead = []
@@ -26,7 +30,7 @@ def read_xml(file):
         name = doc['AnnotatedECG']['component']['series']['component']['sequenceSet']['component'][i]['sequence']['code']['@code'].split('_')[-1]
         scale = float(doc['AnnotatedECG']['component']['series']['component']['sequenceSet']['component'][i]['sequence']['value']['scale']['@value'])
         lead = read_lead(doc['AnnotatedECG']['component']['series']['component']['sequenceSet']['component'][i]['sequence']['value']['digits'])
-        print(scale)
+        logger.debug("Scale: %s", scale)
         matrix[name] = np.array(lead) * scale
     return(matrix)
 

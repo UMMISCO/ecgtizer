@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from pdf2image import convert_from_path, exceptions
 from .extraction_functions import *
@@ -11,6 +13,8 @@ import pandas as pd
 
 import io
 import base64
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -38,7 +42,7 @@ def convert_PDF2image(path_input, DPI):
         # Convert all the pages of the pdf into PIL
         pages = convert_from_path(path_input, poppler_path= '', dpi = DPI) 
     except exceptions.PDFPageCountError:
-        print("Impossible conversion.\nThe input file is not a PDF.\n")
+        logger.error("Impossible conversion. The input file is not a PDF.")
         return("_", "_", False)
     return(pages,len(pages), True)
 
@@ -834,7 +838,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
         for t in dic_tracks:
             if DEBUG == True:
                 LENGTH_PULSE = 140
-                print("Track :", t)
+                logger.debug("Track: %s", t)
                 plt.figure(figsize = (20,14))
                 plt.plot(dic_tracks[t])     
                 plt.axvline(LENGTH_PULSE, c = 'r')
@@ -967,9 +971,9 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
             
             # Plot the different pixel  
             if DEBUG == True:
-                print("0 : ", pixel_zero)
-                print("1 : ", pixel_one)
-                print("1st pixel : ", all_signal[0])
+                logger.debug("0: %s", pixel_zero)
+                logger.debug("1: %s", pixel_one)
+                logger.debug("1st pixel: %s", all_signal[0])
         
         # Scale the signal in amplitude
         new_signal = np.zeros((len(all_signal)))

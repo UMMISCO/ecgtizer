@@ -1,3 +1,4 @@
+import logging
 import os
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
@@ -5,6 +6,8 @@ from os.path import isfile,join, isdir, exists
 from os import listdir, makedirs
 import xmltodict as xml
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, transparent = False):
@@ -113,7 +116,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, 
                     else:
                         name = path + name_temp[0]+'('+str(a)+').'+name_temp[1]
                     a+=1
-                print(name)
+                logger.info("Saving plot to: %s", name)
                 plt.savefig(name, transparent=transparent)
             plt.show()
     else:
@@ -144,7 +147,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, 
                 else:
                     name = path + name_temp[0]+'('+str(a)+').'+name_temp[1]
                 a+=1
-            print(name)
+            logger.info("Saving plot to: %s", name)
             plt.savefig(name, transparent=transparent)
         plt.show()
 
