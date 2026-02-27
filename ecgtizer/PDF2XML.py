@@ -57,6 +57,45 @@ LEAD_TIME_6X2 = {
 
 
 
+def _binarize_image(image: np.ndarray, TYPE: str, NOISE: bool | float) -> np.ndarray:
+    """Binarize a grayscale or BGR image using the appropriate thresholding method."""
+    if image.ndim == 3:
+        img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        img_gray = image
+    img_blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
+
+    if NOISE:
+        _, image_bin = cv2.threshold(img_gray, 40, 255, cv2.THRESH_BINARY_INV)
+    elif TYPE.lower() == "wellue":
+        _, image_bin = cv2.threshold(img_blur, 127, 255, cv2.THRESH_BINARY_INV)
+    else:
+        _, image_bin = cv2.threshold(img_blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    return image_bin
+
+
+def _calibrate_ref_pulse(ref_pulse: np.ndarray, DPI: int = 0) -> tuple[float, float]:
+    """Compute calibration (pixel_zero, factor) from a reference pulse segment.
+
+    Returns (pixel_zero, factor) where factor converts pixel distance to µV.
+    """
+    pixel_zero = float(max(ref_pulse[:10]) if len(ref_pulse) >= 10 else max(ref_pulse))
+    pixel_one = float(min(ref_pulse))
+
+    # Flat pulse fallback
+    if np.all(np.diff(ref_pulse) == 0):
+        pixel_zero = float(np.mean(ref_pulse))
+        pixel_one = float(min(ref_pulse))
+
+    f = pixel_zero - pixel_one
+    if f == 0:
+        if DPI > 0:
+            f = (10 * DPI) / 25.4
+        else:
+            f = 1.0
+    return pixel_zero, f
+
+
 def convert_PDF2image(path_input: str, DPI: int) -> np.ndarray:
     
     """
@@ -345,40 +384,8 @@ def tracks_extraction(image: np.ndarray, TYPE: str, DPI: int, FORMAT: str, NOISE
     if DEBUG:
         plt.figure(figsize = (20,14))
     
-    # Convert the image in gray scale 
-    img_gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    # Apply a Gaussian Blur
-    img_blur = cv2.GaussianBlur(img_gray, (5,5), 0)
-    
-    # If the image is noised we will use the Sauvola detection thresholding
-    if NOISE: 
-        # # Size of the local window for the Sauvola thresholding 
-        # WINDOW_SIZE = 5 
-        # # Apply Sauvola Thresholding
-        # thresh_sauvola = threshold_sauvola(img_blur, window_size=WINDOW_SIZE)
-        
-        # # Binarize the image
-        # image_bin = img_blur < thresh_sauvola 
-        # image_bin2 = np.ones((len(image_bin),len(image_bin[0])))
-        # for i in range(len(image_bin)):
-        #     for j in range(len(image_bin[i])):
-        #         if image_bin[i][j] == False:
-        #             image_bin2[i][j] = 0
-        #         else :
-        #             image_bin2[i][j] = 255
-        # image_bin = image_bin2.astype("uint8")
-        image_gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-        # Binarize the image with the deterministic threshold
-        ret, image_bin = cv2.threshold(image_gray, 40, 255, cv2.THRESH_BINARY_INV)
-        
-    # If the image is Wellue type we have determine the optimal threshold
-    elif TYPE.lower() == "wellue":
-        ret, image_bin = cv2.threshold(img_blur, 127, 255, cv2.THRESH_BINARY_INV)
-        
-    # If the image is not noised we will use the Otsu thresholding    
-    else: 
-        # Apply Otsu Thresholding
-        ret,image_bin = cv2.threshold(img_blur,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU) 
+    # Binarize the image using the appropriate thresholding method
+    image_bin = _binarize_image(image, TYPE, NOISE)
     
 
     # Compute the horizontal variance on binarized image
@@ -853,22 +860,9 @@ def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT:
                     plt.axvline(LENGTH_PULSE, c = 'r')
                     plt.show()
                 
-                # Isolate the reference pulse
+                # Isolate and calibrate the reference pulse
                 dic_ref_pulse = dic_tracks[t][ : LENGTH_PULSE ]
-                # Pixel of amplitude 0mV
-                pixel_zero = max(dic_ref_pulse[:10])
-                # Pixel of amplitude 1mV
-                pixel_one  = min(dic_ref_pulse) 
-                
-                # if we have not extracted the reference pulse
-                if np.all(np.diff(dic_ref_pulse) == 0): 
-                    pixel_zero = np.mean(dic_ref_pulse)
-                    pixel_one  = min(dic_ref_pulse)
-                    
-                # Define the factor
-                f = pixel_zero - pixel_one 
-                if f == 0:
-                    f = pixel_zero - (pixel_zero - ((10*DPI)/25.4))
+                pixel_zero, f = _calibrate_ref_pulse(dic_ref_pulse, DPI)
                 
                 # Separate the signal from the reference pulse
                 all_signal = dic_tracks[t][LENGTH_PULSE : ]
