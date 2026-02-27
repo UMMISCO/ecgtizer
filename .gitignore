@@ -37,3 +37,6 @@ Thumbs.db
 # Sphinx documentation
 docs/_build/
 
+# Vignette / notebook outputs
+output/
+

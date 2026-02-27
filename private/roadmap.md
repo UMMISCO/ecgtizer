@@ -41,6 +41,7 @@
 - [x] Add functional documentation with real examples for all 8 modules
 - [x] Add tests for anonymisation.py and XML2PDF.xml_to_pdf (+17 tests, fix xml_to_pdf type1 bug)
 - [x] Remove legacy setup.py (replaced by pyproject.toml)
+- [x] Add pipeline vignette notebook (docs/vignette_pipeline.ipynb) — 12-stage visual walkthrough
 
 ---
 
@@ -69,3 +70,4 @@
 | 2026-02-27 | fix/foundation-cleanup | Phase 4 (4/5): pyproject.toml, GitHub Actions CI, pre-commit hooks, LICENSE file |
 | 2026-02-27 | fix/foundation-cleanup | Phase 4 (5/5) + Phase 5 complete: Sphinx docs, README rewrite, NumPy-style docstrings on all 72 public symbols |
 | 2026-02-27 | fix/foundation-cleanup | CI docs build, 17 new tests (anonymisation + XML2PDF), xml_to_pdf type1 bug fix, setup.py removal, functional docs with real examples |
+| 2026-02-27 | fix/foundation-cleanup | Pipeline vignette notebook: 12-stage visual walkthrough with real ECG data |

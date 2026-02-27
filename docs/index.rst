@@ -16,6 +16,12 @@ for completing partial leads.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Vignette
+
+   Pipeline walkthrough (Jupyter notebook) <https://github.com/your-org/ecgtizer/blob/main/docs/vignette_pipeline.ipynb>
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference
 
    api/index
