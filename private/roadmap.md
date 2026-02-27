@@ -23,10 +23,10 @@
 - [x] Refactor monolithic functions in `PDF2XML.py` (text_extraction, tracks_extraction)
 
 ## Phase 4 — Best Practices (P3)
-- [ ] Migrate to `pyproject.toml`
-- [ ] Set up CI/CD (GitHub Actions)
-- [ ] Add pre-commit hooks (black, flake8, mypy)
-- [ ] Add LICENSE file
+- [x] Migrate to `pyproject.toml`
+- [x] Set up CI/CD (GitHub Actions)
+- [x] Add pre-commit hooks (black, flake8, mypy)
+- [x] Add LICENSE file
 - [ ] Generate API docs with Sphinx
 
 ---
@@ -52,3 +52,4 @@
 | 2026-02-27 | fix/foundation-cleanup | Phase 2 (5/6): logging module, dead code removal, bare excepts, wildcard imports, boolean anti-patterns |
 | 2026-02-27 | fix/foundation-cleanup | Phase 2 (6/6): PDF2XML_mod.py variable naming cleanup |
 | 2026-02-27 | fix/foundation-cleanup | Phase 3 complete: magic number constants, NumPy vectorization (5 loops), type hints on all public APIs, refactored monolithic functions |
+| 2026-02-27 | fix/foundation-cleanup | Phase 4 (4/5): pyproject.toml, GitHub Actions CI, pre-commit hooks, LICENSE file |
