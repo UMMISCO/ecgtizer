@@ -188,11 +188,7 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
         # Convert the image in gray scale
         image_gray = cv2.cvtColor(work_image,cv2.COLOR_BGR2GRAY) 
         # Binarize the image thanks to the gray scale
-        new_image = np.full(image_gray.shape, 0)
-        for c in range(len(image_gray)):
-            for l in range(len(image_gray[c])):
-                if image_gray[c,l] == 0:
-                        new_image[c,l] = 255
+        new_image = np.where(image_gray == 0, WHITE_PIXEL, 0).astype(image_gray.dtype)
         
 
 
@@ -448,13 +444,8 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     # Compute the vertical variance   
     vertical_variance = np.var(image_bin, axis = 0) 
 
-    # Define a list which will contain the pikes position
-    peaksv = [] 
-    for var in range(len(vertical_variance)):
-        # If the variance is no null then there is a signal waveform a we must not cut here the signal
-        if vertical_variance[var] > WAVEFORM_VARIANCE_MIN : 
-            # Pikes take the beggining position of the waveform
-            peaksv.append(var)
+    # Find positions where variance indicates signal waveform presence
+    peaksv = np.where(vertical_variance > WAVEFORM_VARIANCE_MIN)[0].tolist()
     
     
             
@@ -523,14 +514,7 @@ def clean_tracks(dic_tracks, TYPE, NOISE, DEBUG):
 
                     # Binarize the image 
                     image_bin = img_blur < thresh_sauvola 
-                    image_bin2 = np.ones((len(image_bin),len(image_bin[0])))
-                    for i in range(len(image_bin)):
-                        for j in range(len(image_bin[i])):
-                            if not image_bin[i][j]:
-                                image_bin2[i][j] = 0
-                            else :
-                                image_bin2[i][j] = 255
-                    image_bin = image_bin2
+                    image_bin = np.where(image_bin, WHITE_PIXEL, 0).astype(np.uint8)
 
                 # If the image is not noised we will use the Otsu thresholding   
                 else: 
@@ -607,17 +591,15 @@ def sup_holes(signal, TYPE):
             j += 1
         signal[-1] = signal[-j]
 
-    # If a point inside the signal is a hole we made the mean between the closer points 
-    # before and after it which are in the signal
-    for i in range(len(signal)-1): 
-        if signal[i] == 0:
-            a = i+1
-            b = i-1
-            while signal[a] == 0:
-                a += 1
-            while signal[b] == 0:
-                b -= 1
-            signal[i] = np.mean([signal[b],signal[a]])     
+    # Interpolate interior holes (zeros) using nearest non-zero neighbours
+    signal = np.asarray(signal, dtype=float)
+    zero_mask = signal == 0
+    if np.any(zero_mask):
+        nonzero_idx = np.where(~zero_mask)[0]
+        if len(nonzero_idx) > 0:
+            signal[zero_mask] = np.interp(
+                np.where(zero_mask)[0], nonzero_idx, signal[nonzero_idx]
+            )     
             
     return(signal[:end])
 
@@ -901,8 +883,6 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                 logger.debug("1st pixel: %s", all_signal[0])
         
         # Scale the signal in amplitude
-        new_signal = np.zeros((len(all_signal)))
-        for v in range(len(all_signal)):
-            new_signal[v] = ((pixel_zero-all_signal[v])/f) * AMPLITUDE_SCALE_UV # Scale the point in function of the Zero pixel and the
-        
-        return(new_signal )
+        new_signal = ((pixel_zero - all_signal) / f) * AMPLITUDE_SCALE_UV
+
+        return(new_signal)
