@@ -10,6 +10,47 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
+# --- Signal parameters ---
+SAMPLING_FREQ = 500          # Hz
+SIGNAL_LENGTH_STANDARD = 5000  # 10 seconds at 500 Hz (Wellue/other)
+SIGNAL_LENGTH_CLASSIC = 5140   # Classic format signal length
+SIGNAL_LENGTH_KARDIA = 4000    # Kardia format signal length
+AMPLITUDE_SCALE_UV = 1000     # Scaling factor for µV conversion
+
+# --- Reference pulse lengths (in samples) ---
+REF_PULSE_APPLE = 180
+REF_PULSE_KARDIA = 240
+REF_PULSE_GENERIC = 300
+REF_PULSE_CLASSIC = 330
+
+# --- Image noise/variance thresholds ---
+VARIANCE_NOISY = 3000         # Above this → image is noisy
+VARIANCE_HIGH = 2000          # Above this or below LOW → might be noisy
+VARIANCE_LOW = 600            # Below HIGH or above this → might be noisy
+NOISE_PARTIAL = 0.5           # Intermediate noise state
+
+# --- Image processing thresholds ---
+LINE_VARIANCE_MIN = 1000      # Min row variance to keep during image cleanup
+COLUMN_VARIANCE_MIN = 200     # Min column variance to keep during image cleanup
+WAVEFORM_VARIANCE_MIN = 200   # Min vertical variance to detect signal presence
+
+# --- Pixel values ---
+WHITE_PIXEL = 255
+
+# --- Lead timing boundaries (samples) ---
+LEAD_TIME_3X4 = {
+    'I': (0, 1250), 'II': (0, 1250), 'III': (0, 1250),
+    'AVR': (1250, 2500), 'AVL': (1250, 2500), 'AVF': (1250, 2500),
+    'V1': (2500, 3750), 'V2': (2500, 3750), 'V3': (2500, 3750),
+    'V4': (3750, 5000), 'V5': (3750, 5000), 'V6': (3750, 5000),
+    'IIc': (0, 5000),
+}
+LEAD_TIME_6X2 = {
+    'I': (0, 2500), 'II': (0, 2500), 'III': (0, 2500),
+    'AVR': (0, 2500), 'AVL': (0, 2500), 'AVF': (0, 2500),
+    'V1': (2500, 5000), 'V2': (2500, 5000), 'V3': (2500, 5000),
+    'V4': (2500, 5000), 'V5': (2500, 5000), 'V6': (2500, 5000),
+}
 
 
 
@@ -71,14 +112,11 @@ def check_noise_type(image, DPI, DEBUG):
         return("Kardia", False)
     
     # Check the variance in the image 
-    if np.var(image) > 2000 or np.var(image) < 600 :
-        if np.var(image) > 3000:
-            # above a variance of 3000 the image is considered noisy
+    if np.var(image) > VARIANCE_HIGH or np.var(image) < VARIANCE_LOW:
+        if np.var(image) > VARIANCE_NOISY:
             NOISE = True
-        
         else:
-            # below a variance we don't know if the image is noised or not
-            NOISE = 0.5
+            NOISE = NOISE_PARTIAL
     
     else:
         # below a variance of 600 the image is considered noisy  
@@ -168,10 +206,10 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
         
         
         for i in range(len(new_image)):
-            if var_line[i] < 1000:
+            if var_line[i] < LINE_VARIANCE_MIN:
                 working_image[i,:] = 0
         for i in range(len(new_image[0])):
-            if var_column[i] < 200:
+            if var_column[i] < COLUMN_VARIANCE_MIN:
                 working_image[:,i] = 0
         
         if DEBUG:
@@ -414,7 +452,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
     peaksv = [] 
     for var in range(len(vertical_variance)):
         # If the variance is no null then there is a signal waveform a we must not cut here the signal
-        if vertical_variance[var] > 200 : 
+        if vertical_variance[var] > WAVEFORM_VARIANCE_MIN : 
             # Pikes take the beggining position of the waveform
             peaksv.append(var)
     
@@ -634,11 +672,11 @@ def lead_extraction(dic_tracks, extraction_method, TYPE, NOISE, DEBUG = False):
         x = [i for i in range(len(signal))]
         y = signal
         if TYPE.lower() == 'classic':
-            new_x = [i for i in np.arange(0,len(signal),len(signal)/5140)]
+            new_x = [i for i in np.arange(0,len(signal),len(signal)/SIGNAL_LENGTH_CLASSIC)]
         elif TYPE.lower() == 'kardia':
-            new_x = [i for i in np.arange(0,len(signal),len(signal)/4000)]
-        else: 
-            new_x = [i for i in np.arange(0,len(signal),len(signal)/5000)]
+            new_x = [i for i in np.arange(0,len(signal),len(signal)/SIGNAL_LENGTH_KARDIA)]
+        else:
+            new_x = [i for i in np.arange(0,len(signal),len(signal)/SIGNAL_LENGTH_STANDARD)]
         signal_scale = np.interp(new_x,x,y) 
         dic_extracted_track_not_scale[d] = signal
         dic_extracted_tracks[d] = signal_scale
@@ -682,8 +720,8 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
         if TYPE.lower() != 'classic':
             if page == 0:
                 # the reference pulse lasts 0.28sec
-                LENGTH_PULSE       = 240  
-            else: 
+                LENGTH_PULSE       = REF_PULSE_KARDIA
+            else:
                 LENGTH_PULSE       = 0
             
         # The disposition of the ECG is 4x4
@@ -694,11 +732,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                               1 : ['II', 'AVL', 'V2', 'V5'],
                               2 : ['III', 'AVF', 'V3', 'V6'],
                               3 : ['II']}
-            dic_time = {'I':(0,1250), 'II':(0,1250),'III':(0,1250),
-                       'AVR': (1250,2500), 'AVL': (1250,2500),'AVF': (1250,2500),
-                       'V1': (2500,3750), 'V2': (2500,3750),'V3': (2500,3750),
-                       'V4': (3750,5000), 'V5': (3750,5000),'V6': (3750,5000),
-                       'IIc': (0,5000)}
+            dic_time = LEAD_TIME_3X4
         # The disposition of the ECG is 6x2
         elif len(dic_tracks) == 6: 
             # leads last 5sec if there are 6 tracks
@@ -709,8 +743,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                               3 : ['AVR', 'V4'],
                               4 : ['AVL', 'V5'],
                               5 : ['AVF', 'V6'],}
-            dic_time = {'I':(0,2500), 'II':(0,2500),'III':(0,2500),'AVR': (0,2500), 'AVL': (0,2500),'AVF': (0,2500),
-                       'V1': (2500,5000), 'V2': (2500,5000),'V3': (2500,5000),'V4': (2500,5000), 'V5': (2500,5000),'V6': (2500,5000)}
+            dic_time = LEAD_TIME_6X2
             
         ########## METTRE UN ELSE ICI ##################    
         #else:
@@ -739,12 +772,12 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
 
             if TYPE.lower() != 'kardia':
                 # Isolate the reference pulse
-                LENGTH_PULSE = 330
+                LENGTH_PULSE = REF_PULSE_CLASSIC
                 if len(dic_tracks) == 4:
-                    LENGTH_PULSE = len(dic_tracks[t]) - 5000
-                    
+                    LENGTH_PULSE = len(dic_tracks[t]) - SIGNAL_LENGTH_STANDARD
+
                 elif len(dic_tracks) == 6:
-                    LENGTH_PULSE = len(dic_tracks[t]) - 5000
+                    LENGTH_PULSE = len(dic_tracks[t]) - SIGNAL_LENGTH_STANDARD
                 dic_ref_pulse[t] = dic_tracks[t][ : LENGTH_PULSE ] 
                 
                 # Pixel of amplitude 0mV
@@ -766,7 +799,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
 
                 # special case on the disposition 4x4 the last track containe 10sec of the lead II
                 if len(dic_tracks) == 4 and t == 3: 
-                    dic_leads['IIc'] = (((pixel_zero - dic_tracks[t][LENGTH_PULSE: 4 * LEAD_LENGTH+LENGTH_PULSE])/f) * 1000)
+                    dic_leads['IIc'] = (((pixel_zero - dic_tracks[t][LENGTH_PULSE: 4 * LEAD_LENGTH+LENGTH_PULSE])/f) * AMPLITUDE_SCALE_UV)
                     if DEBUG:
                         plt.show()
 
@@ -774,7 +807,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                 elif LEAD_LENGTH != 0 :
                     while length < len(dic_tracks[1]):
                         try :
-                            dic_leads[dic_association[t][it]] = (((pixel_zero - dic_tracks[t][length : length + LEAD_LENGTH]) / f) * 1000) # We fill the leads dictionnary with the name of the lead and the image of it
+                            dic_leads[dic_association[t][it]] = (((pixel_zero - dic_tracks[t][length : length + LEAD_LENGTH]) / f) * AMPLITUDE_SCALE_UV) # We fill the leads dictionnary with the name of the lead and the image of it
                             length += int(len(dic_tracks[t][ LENGTH_PULSE:  ]) / LEAD_NUMBER)
                             it     += 1
                             if DEBUG:
@@ -802,7 +835,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
                     dic_leads['ref'] = [pixel_zero,f]
                     
                     # Scale the signal in amplitude
-                    dic_leads[dic_association[t]] = ((pixel_zero - dic_tracks[t][length:]) / f)* 1000
+                    dic_leads[dic_association[t]] = ((pixel_zero - dic_tracks[t][length:]) / f) * AMPLITUDE_SCALE_UV
                 
                 else:
                     length = 0
@@ -810,7 +843,7 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
           
         try:
             for k in dic_leads:
-                zero_vector = np.zeros(5000)
+                zero_vector = np.zeros(SIGNAL_LENGTH_STANDARD)
                 zero_vector[dic_time[k][0]:dic_time[k][1]] = dic_leads[k]
                 dic_leads[k] = zero_vector
         except Exception as e:
@@ -820,13 +853,11 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
     # If the format is not classic
     else:
         if TYPE.lower() == 'apple':
-            # the reference pulse lasts 0.28sec
-            LENGTH_PULSE       = 180  
+            LENGTH_PULSE       = REF_PULSE_APPLE
         elif TYPE.lower() == 'kardia':
-            LENGTH_PULSE       = 240
+            LENGTH_PULSE       = REF_PULSE_KARDIA
         else:
-            # the reference pulse lasts 0.28sec
-            LENGTH_PULSE       = 300   
+            LENGTH_PULSE       = REF_PULSE_GENERIC   
         
         
         for t in dic_tracks:
@@ -872,6 +903,6 @@ def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
         # Scale the signal in amplitude
         new_signal = np.zeros((len(all_signal)))
         for v in range(len(all_signal)):
-            new_signal[v] = ((pixel_zero-all_signal[v])/f)*1000 # Scale the point in function of the Zero pixel and the
+            new_signal[v] = ((pixel_zero-all_signal[v])/f) * AMPLITUDE_SCALE_UV # Scale the point in function of the Zero pixel and the
         
         return(new_signal )

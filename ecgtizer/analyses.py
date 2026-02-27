@@ -1,5 +1,9 @@
 import logging
 
+# --- Signal parameters ---
+MAX_ALIGNMENT_LENGTH = 5000    # Max signal length before downsampling
+AMPLITUDE_SCALE_UV = 1000      # µV to mV conversion factor
+
 import xmltodict as xml
 from scipy.stats import pearsonr
 from fastdtw import fastdtw
@@ -41,10 +45,10 @@ def alignement(lead1, lead2):
     a = 0
     if len(lead1) > len(lead2):
         lead1, lead2 = [lead2,lead1]
-    if len(lead2) > 5000:
+    if len(lead2) > MAX_ALIGNMENT_LENGTH:
         x = [i for i in range(len(lead2))]
         y = lead2
-        new_x = [i for i in np.arange(0,len(lead2),len(lead2)/5000)]
+        new_x = [i for i in np.arange(0,len(lead2),len(lead2)/MAX_ALIGNMENT_LENGTH)]
         lead2 = np.interp(new_x,x,y)
     
     score = pearsonr (lead1, lead2[a : a + len(lead1)])[0]
@@ -91,8 +95,8 @@ def analyse(file1, file2):
         if l != 'ref':
             l1, l2 = alignement(file1[l], file2[l])
             res_matrix_cor[l] = pearsonr(l1, l2)[0]
-            res_matrix_mse[l] = np.mean(np.sqrt(((l1/1000) - (l2/1000))**2))
-            res_matrix_dtw[l] = fastdtw((l1/1000), (l2/1000))[0]
+            res_matrix_mse[l] = np.mean(np.sqrt(((l1/AMPLITUDE_SCALE_UV) - (l2/AMPLITUDE_SCALE_UV))**2))
+            res_matrix_dtw[l] = fastdtw((l1/AMPLITUDE_SCALE_UV), (l2/AMPLITUDE_SCALE_UV))[0]
         
     dic['corr'] = res_matrix_cor
     dic['mse'] = res_matrix_mse

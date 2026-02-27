@@ -4,6 +4,15 @@ import numpy as np
 from scipy import signal
 from scipy.interpolate import interp1d
 
+# --- Signal parameters ---
+NUM_LEADS = 12
+SIGNAL_LENGTH = 5000           # 10 seconds at 500 Hz
+RESAMPLED_LENGTH = 512         # Model input length after resampling
+SAMPLING_FREQ = 500            # Hz
+LOW_CUTOFF_HZ = 0.05
+HIGH_CUTOFF_HZ = 150.0
+RESAMPLED_FREQ = 512           # Hz
+
 
 class Convolution1D_layer(nn.Module):
     def __init__(self, in_f, out_f, device):
@@ -20,9 +29,8 @@ class Convolution1D_layer(nn.Module):
         
     def forward(self, x):
         b = len(x)
-        new_x = torch.tensor(np.zeros((b,self.f, 12, int(x.shape[-1]/2))).astype("float32")).to(self.device)
-        #new_x = torch.tensor(np.zeros((b,self.f, 12, int(x.shape[-1]/2))).astype("float32"))
-        for i in range(12):
+        new_x = torch.tensor(np.zeros((b,self.f, NUM_LEADS, int(x.shape[-1]/2))).astype("float32")).to(self.device)
+        for i in range(NUM_LEADS):
             new_x[:,:,i,:] = self.conv(x[:,:,i,:])
         return(new_x)
 
@@ -42,8 +50,8 @@ class Deconvolution1D_layer(nn.Module):
         
     def forward(self, x):
         b = len(x)
-        new_x = torch.tensor(np.zeros((b,self.f, 12, int(x.shape[-1]*2))).astype("float32")).to(self.device)
-        for i in range(12):
+        new_x = torch.tensor(np.zeros((b,self.f, NUM_LEADS, int(x.shape[-1]*2))).astype("float32")).to(self.device)
+        for i in range(NUM_LEADS):
             new_x[:,:,i,:] = self.deconv(x[:,:,i,:])
         return(new_x)
             
@@ -177,7 +185,7 @@ class Autoencoder_net(nn.Module):
 
 def linear_interpolation(signal):
     original_length = len(signal)
-    new_length = 5000
+    new_length = SIGNAL_LENGTH
 
     # Create the original x-axis values
     x_original = np.linspace(0, original_length - 1, original_length)
@@ -196,25 +204,25 @@ def denormalization(signal, original_min, original_max):
     return denormalized_signal
 
 def normalization(Z):
-    new_Z = np.zeros((512,len(Z)))
+    new_Z = np.zeros((RESAMPLED_LENGTH,len(Z)))
     scale_Z = np.zeros((len(Z),2))
     for i in range(len(Z)):
         mini=Z[:,i].min()
         maxi=Z[:,i].max()
         temp = (-1+((Z[i]-mini)*(2))/(maxi-mini))
         signal_bef = temp
-        nyquist = 0.5 * 500  
-        low_cutoff = 0.05 / nyquist
-        high_cutoff = 150.0 / nyquist
-        new_sampling_frequency = 512
-        original_sampling_frequency = 5000
+        nyquist = 0.5 * SAMPLING_FREQ
+        low_cutoff = LOW_CUTOFF_HZ / nyquist
+        high_cutoff = HIGH_CUTOFF_HZ / nyquist
+        new_sampling_frequency = RESAMPLED_FREQ
+        original_sampling_frequency = SIGNAL_LENGTH
         b, a = signal.butter(4, [low_cutoff, high_cutoff], btype='band')
         filtered_signal = signal.lfilter(b, a, Z[i])
         #filtered_signal = signal_bef
         resampled_signal, mini, maxi = normalization2(signal.resample(filtered_signal, int(len(filtered_signal) * (new_sampling_frequency / original_sampling_frequency))))
 
         if np.all(np.isnan(resampled_signal)):
-            resampled_signal = np.random.normal(0,1,(512))
+            resampled_signal = np.random.normal(0,1,(RESAMPLED_LENGTH))
         new_Z[:,i] = resampled_signal
         scale_Z[i,:] = [mini,maxi]
     return(new_Z, scale_Z)
@@ -232,13 +240,13 @@ def replace_random(array, True_data = False):
         dic_split = {0 : (0, 256), 1 : (0, 256), 2 : (0, 256), 3 : (0, 256), 4 : (0, 256), 5 : (0, 256),
                 6 : (256, 512), 7 : (256, 512), 8 : (256, 512), 9 : (256, 512), 10 : (256, 512), 11 : (256, 512)}
     
-    final_matrix = np.random.random((1,12,512))
+    final_matrix = np.random.random((1, NUM_LEADS, RESAMPLED_LENGTH))
     array, scale = normalization(array)
     if not True_data:
-        for i in range(12):
+        for i in range(NUM_LEADS):
             final_matrix[0,i,dic_split[i][0]: dic_split[i][1]] = array[dic_split[i][0]: dic_split[i][1],i]
     else:
-        for i in range(12):
+        for i in range(NUM_LEADS):
             final_matrix[0,i,:] = array[:,i]
     return(final_matrix, scale)
 
@@ -256,15 +264,15 @@ def completion_(ecg, path_model, device):
         dic_sorted = ['I', 'IIc', 'III', 'AVL', 'AVR', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
     else:
         dic_sorted = ['I', 'II', 'III', 'AVL', 'AVR', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
-    matrix_to_complete = np.zeros((12,5000))
+    matrix_to_complete = np.zeros((NUM_LEADS, SIGNAL_LENGTH))
     for k in dic_sorted:
         matrix_to_complete[dic_sorted.index(k),:] = np.nan_to_num(ecg[k])
     matrix_to_complete = np.array(matrix_to_complete)
     ecg_to_complete,ecg_scale = replace_random(matrix_to_complete, True_data=False)
     inp = torch.tensor(np.expand_dims(ecg_to_complete,1).astype("float32")).to(device)
     comp = model(inp).detach().numpy()
-    ecg_complete = np.zeros((12,5000))
-    for l in range(12):
+    ecg_complete = np.zeros((NUM_LEADS, SIGNAL_LENGTH))
+    for l in range(NUM_LEADS):
         ecg_complete[l,:] = denormalization(linear_interpolation(comp[0, l, :]), ecg_scale[l,0], ecg_scale[l,1])
 
     ecg = {}
