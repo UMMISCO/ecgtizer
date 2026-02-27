@@ -161,46 +161,6 @@ def plot_overlay(lead,image, piqueh, piquev):
 
         
 
-def write_lead_root(code_lead, codeSystem, code_lead_name, scale_y):
-    root = ET.Element("sequence")
-    branch = ET.subElement(root,'code')
-    subbranch = ET.subElement(branch,'code')
-    subbranch.set ('code',code_lead)
-    subbranch = ET.subElement(branch,'codeSystem')
-    subbranch.set('codeSystem',codeSystem)
-    subbranch = ET.subElement(branch,'codeSystemName')
-    subbranch.set('codeSystemName',code_lead_name)
-    branch = ET.subElement(root, 'value')
-    branch.set('@xsi:type', 'SLIST_PQ')
-    subranch = ET.subElement(branch, 'origin')
-    subranch.set('value', '0')
-    subranch.set('unit', 'uV')
-    subranch = ET.subElement(branch, 'scale')
-    subranch.set('value', str(scale_y/10))
-    subranch.set('unit', 'uV')
-    ET.SubElement(branch, "digits").text = lead
-    return (root)
-
-def write_element(code_lead, codeSystem, actcode, scale_y):
-    root = ET.Element("sequence")
-    branch = ET.subElement(root,'code')
-    subbranch = ET.subElement(branch,'code')
-    subbranch.set ('code','TIME_RELATIVE')
-    subbranch = ET.subElement(branch,'codeSystem')
-    subbranch.set('codeSystem',codeSystem)
-    subbranch = ET.subElement(branch,'codeSystemName')
-    subbranch.set('codeSystemName',actcode)
-    branch = ET.subElement(root, 'value')
-    branch.set('@xsi:type', 'SLIST_PQ')
-    subranch = ET.subElement(branch, 'head')
-    subranch.set('value', '0.000')
-    subranch.set('unit', 's')
-    subranch = ET.subElement(branch, 'increment')
-    subranch.set('value', str((scale_x/10)/500))
-    subranch.set('unit', 's')
-    return (root)
-
-
 
 def writexml (path_out, time_low, time_high,date_version, num_version, id_root, code, rhythm, actcode, codeSystem, displayName, manufacturerModelName, manufacturerOrganization, code_lead, code_lead_name, scale_x, scale_y, lead, type_pdf, 
 Low_freq, High_freq, BPM, PR, QRS, QT, QTc, P, R, T, moyRR, QTcB, QTcF, Rythme, ECG, Age, sex, other):
@@ -533,13 +493,13 @@ Low_freq, High_freq, BPM, PR, QRS, QT, QTc, P, R, T, moyRR, QTcB, QTcF, Rythme, 
         tree.write(path_out)
 
 
-# We transform the np file into a string
-def transform_np2txt(List):
-    List = List.tolist()
+def transform_np2txt(arr):
+    """Transform a numpy array into a space-separated string."""
+    values = arr.tolist()
     txt = ''
-    for i in range(len(List)-1):
-        txt+=str(List[i])+" "
-    txt+=str(List[-1])
+    for i in range(len(values)-1):
+        txt+=str(values[i])+" "
+    txt+=str(values[-1])
     return(txt)
 
 # We transform time into a correct format
