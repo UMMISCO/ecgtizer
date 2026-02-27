@@ -19,7 +19,16 @@ from io import BytesIO
 
 
 def array_to_pdf(array, filename):
-    # Convertir le tableau NumPy en une image PIL
+    """Convert a NumPy image array to a single-page PDF file.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Image data as a NumPy array (H x W x C or H x W).
+    filename : str
+        Output PDF file path.
+    """
+    # Convert NumPy array to PIL Image
     image = Image.fromarray(array)
 
     # Redimensionner l'image pour s'adapter à la taille souhaitée
@@ -42,6 +51,19 @@ def array_to_pdf(array, filename):
     c.save()
 
 def anonymisation(file, out):
+    """Remove patient-identifying text from an ECG PDF.
+
+    Converts the first page to an image, detects text-like regions in the
+    upper-left corner using morphological dilation, masks them with white
+    pixels, and writes the result as a new PDF.
+
+    Parameters
+    ----------
+    file : str
+        Path to the input ECG PDF file.
+    out : str
+        Path for the anonymized output PDF.
+    """
     dpi = 300
     images, page_number, _ = convert_PDF2image(file, DPI = dpi)
     image = np.array(images[0])

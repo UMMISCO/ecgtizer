@@ -19,20 +19,28 @@ logger = logging.getLogger(__name__)
 
 
 def plot_function(lead_all: dict[str, np.ndarray], lead: str = '', b: int = 0, e: str | int = 'inf', c: str | None = None, save: str | bool = False, transparent: bool = False) -> None:
-    """
-    Main function to write the XML from the numpy extracted ECG
-    
+    """Plot extracted ECG leads.
+
+    Displays a single lead or a multi-panel grid depending on the number
+    of leads available. Automatically selects 3x4, 6x2 or 6x1 layout.
+
     Parameters
     ----------
-    lead_all     : dictionary, dictionary of all the extracted leads
-    lead         : str, lead name to plot
-    b            : int, start of the plot
-    e            : int , end of the plot
-    save         : str, the location to save the plot
-    
-    Returns
-    -------
-    void
+    lead_all : dict[str, numpy.ndarray]
+        Dictionary of all extracted leads keyed by name.
+    lead : str, optional
+        Name of a single lead to plot. When empty, all leads are shown
+        in a grid layout.
+    b : int, optional
+        Start sample index. Defaults to ``0``.
+    e : str or int, optional
+        End sample index, or ``"inf"`` for the full signal.
+    c : str or None, optional
+        Matplotlib color string.
+    save : str or bool, optional
+        File path to save the figure, or ``False`` to skip saving.
+    transparent : bool, optional
+        Save the figure with a transparent background.
     """
     # If it is a multilead or not
     if len(lead_all) > 1:
@@ -160,6 +168,19 @@ def plot_function(lead_all: dict[str, np.ndarray], lead: str = '', b: int = 0, e
         plt.show()
 
 def plot_overlay(lead: dict[str, np.ndarray], image: np.ndarray, piqueh: list, piquev: list) -> None:
+    """Overlay extracted waveforms on the original ECG image.
+
+    Parameters
+    ----------
+    lead : dict[str, numpy.ndarray]
+        Un-scaled extracted waveforms indexed by track number.
+    image : numpy.ndarray
+        Original ECG image array (BGR or grayscale).
+    piqueh : list
+        Horizontal variance peak positions (row centres of each track).
+    piquev : list
+        Vertical variance peak position (column offset for the signal start).
+    """
     plt.imshow(image, cmap = 'gray')
     for i in range(len(piqueh)):
         median = np.median(lead[i])
@@ -510,8 +531,25 @@ def transform_np2txt(arr: np.ndarray) -> str:
     txt+=str(values[-1])
     return(txt)
 
-# We transform time into a correct format
 def conversion_time(day: str, month: str, year: str, hour: str) -> tuple[str, str]:
+    """Convert date/time components to the HL7 aECG timestamp format.
+
+    Parameters
+    ----------
+    day : str
+        Day of month (``"01"``-``"31"``) or ``"unknow"``.
+    month : str
+        Three-letter month abbreviation (e.g. ``"Jan"``) or ``"unknow"``.
+    year : str
+        Four-digit year string or ``"unknow"``.
+    hour : str
+        Time in ``"HH:MM"`` format or ``"unknow"``.
+
+    Returns
+    -------
+    str
+        Concatenated timestamp string ``YYYYMMDDHHMMSS``.
+    """
     month_dic = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08',
                  'Sep':'09','Oct':'10','Nov':'11','Dec':'12', 'unknow' : '00'}
     if hour == 'unknow':

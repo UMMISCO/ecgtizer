@@ -21,14 +21,41 @@ import time
 logger = logging.getLogger(__name__)
 
 class ECGtizer:
-    """
-    Class permettant de convertir les ECGs au format PDF vers un format XML
-    input : - str : File name
-            - str : PDF format (optional)
-            - int :  Density Per Inch (DPI) (optionel)
-            - bool : Verbose to describe each step
-    output : - array: Digitize leads
+    """Digitize ECG recordings from PDF documents or images.
 
+    Orchestrates the full extraction pipeline: PDF-to-image conversion,
+    noise/format detection, text masking, track segmentation, waveform
+    digitization and lead calibration.
+
+    Parameters
+    ----------
+    file : str
+        Path to the input file (PDF, PNG, JPG, or JPEG).
+    dpi : int
+        Resolution in dots per inch for the PDF-to-image conversion.
+    Callback : Callable or None, optional
+        Progress callback function. Called with status strings during
+        each pipeline step. Defaults to ``None``.
+    extraction_method : str, optional
+        Waveform extraction algorithm: ``"lazy"``, ``"full"`` or
+        ``"fragmented"``. Defaults to ``"full"``.
+    typ : str, optional
+        Force a specific ECG format (e.g. ``"classic"``, ``"kardia"``).
+        When empty, the format is auto-detected. Defaults to ``""``.
+    verbose : bool, optional
+        Log timing information for each pipeline step.
+        Defaults to ``False``.
+    DEBUG : bool, optional
+        Show intermediate debug plots. Defaults to ``False``.
+
+    Attributes
+    ----------
+    extracted_lead : dict[str, numpy.ndarray]
+        Digitized leads keyed by name (e.g. ``"I"``, ``"II"``, ``"V1"``).
+    TYPE : str
+        Detected or forced ECG format.
+    good : bool
+        ``False`` when the PDF could not be converted.
     """
 
     def __init__(self, file: str, dpi: int, Callback: Callable | None = None, extraction_method: str = "full", typ: str = "", verbose: bool = False, DEBUG: bool = False) -> None:
@@ -248,23 +275,71 @@ class ECGtizer:
         self.dic_tracks = dic_tracks
         self.TYPE = TYPE
 
-    ### Plot the signal Extracted ###
-
     def plot(self, lead: str = "", begin: int = 0, end: str | int = 'inf', c: str | None = None, save: str | bool = False, transparent: bool = False, completion: bool = False) -> None:
+        """Plot extracted (or completed) ECG leads.
+
+        Parameters
+        ----------
+        lead : str, optional
+            Name of a single lead to plot (e.g. ``"II"``). When empty,
+            all leads are plotted in a grid layout.
+        begin : int, optional
+            Start sample index. Defaults to ``0``.
+        end : str or int, optional
+            End sample index, or ``"inf"`` for the full signal.
+        c : str or None, optional
+            Matplotlib color string.
+        save : str or bool, optional
+            File path to save the figure, or ``False`` to skip saving.
+        transparent : bool, optional
+            Save the figure with a transparent background.
+        completion : bool, optional
+            If ``True``, plot the completed leads instead of the
+            raw extracted leads. Requires :meth:`completion` to have
+            been called first.
+        """
         if not completion:
             plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
         else:
             plot_function(lead_all = self.extracted_lead_comp, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
 
     def plot_over(self) -> None:
+        """Overlay extracted waveforms on the original ECG image.
+
+        Displays the source image in grayscale with the digitized
+        waveform traces drawn in red for visual verification.
+        """
         plot_overlay(lead = self.dic_tracks_ex_not_scale, image = self.image, piqueh = self.varianceh, piquev = self.variancev)
 
-    ### Save the ecg on xml ###
     def save_xml(self, save: str, num_version: str = '0.0', date_version: str = "17.O4.2023") -> None:
+        """Export the extracted leads as an HL7 aECG XML file.
+
+        Parameters
+        ----------
+        save : str
+            Output file path for the XML document.
+        num_version : str, optional
+            Software version string embedded in the XML.
+        date_version : str, optional
+            Version date string embedded in the XML.
+        """
         write_xml(matrix = self.extracted_lead, path_out = save, TYPE = self.TYPE, table = self.table_parameters,
                   num_version = num_version, date_version  = date_version)
 
     def completion(self, path_model: str, device: str) -> None:
+        """Complete partial leads to full 10-second recordings.
+
+        Uses a pre-trained PyTorch autoencoder to extend leads that
+        cover only 2.5 s or 5 s to the full 10 s duration. The
+        completed leads are stored in ``self.extracted_lead_comp``.
+
+        Parameters
+        ----------
+        path_model : str
+            Path to the ``.pth`` model weights file.
+        device : str
+            PyTorch device string (e.g. ``"cpu"`` or ``"cuda"``).
+        """
         self.extracted_lead_comp = completion_(ecg = self.extracted_lead, path_model = path_model, device = device)
 
 
