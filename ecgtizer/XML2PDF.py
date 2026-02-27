@@ -33,6 +33,18 @@ import os
 
 
 def read_lead(lead_str: str) -> list[int | float]:
+    """Parse a space-separated string of signal values into a list.
+
+    Parameters
+    ----------
+    lead_str : str
+        Space-separated numeric values from an XML digits element.
+
+    Returns
+    -------
+    list[int | float]
+        Parsed values. Non-numeric tokens are replaced with ``NaN``.
+    """
     lead = []
     lead_str = lead_str.split(' ')
     for l in lead_str:
@@ -43,6 +55,18 @@ def read_lead(lead_str: str) -> list[int | float]:
     return(lead)
 
 def read_xml(file: str) -> dict[str, np.ndarray]:
+    """Read an HL7 aECG XML file and return scaled leads as NumPy arrays.
+
+    Parameters
+    ----------
+    file : str
+        Path to the XML file.
+
+    Returns
+    -------
+    dict[str, numpy.ndarray]
+        Leads keyed by name, amplitude-scaled according to the XML metadata.
+    """
     matrix = {}
     with open(file) as fd:
         doc = xml.parse(fd.read())
@@ -56,8 +80,13 @@ def read_xml(file: str) -> dict[str, np.ndarray]:
     return(matrix)
 
 
-########################### Class Plot ####################################
 class ecg_plot():
+    """ReportLab-based ECG plot renderer.
+
+    Creates publication-quality 12-lead ECG plots on graph paper with
+    configurable layout (rows x columns), speed, amplitude, and page
+    dimensions. Outputs PDF (vector) or PNG (raster) via ReportLab.
+    """
 
     # Default unit of measure is mm, suitable for PDF (vector) output.
     DEFAULT_UNIT = mm
@@ -109,8 +138,26 @@ class ecg_plot():
             self.fillColor = fillColor
             self.textAnchor = textAnchor
 
-############################################ Functions to draw ##############################################################
     def __init__(self, unit=DEFAULT_UNIT, paper_w=DEFAULT_PAPER_W, paper_h=DEFAULT_PAPER_H, cols=DEFAULT_COLS, rows=DEFAULT_ROWS, ampli=None, speed=DEFAULT_SPEED):
+        """Initialize the ECG plot with page layout and graphic styles.
+
+        Parameters
+        ----------
+        unit : float, optional
+            Base measurement unit (default: ``mm``).
+        paper_w : float, optional
+            Paper width in ``unit`` (default: 297 mm, A4 landscape).
+        paper_h : float, optional
+            Paper height in ``unit`` (default: 210 mm).
+        cols : int, optional
+            Number of lead columns (default: 2).
+        rows : int, optional
+            Number of lead rows (default: 6).
+        ampli : float or None, optional
+            Amplitude scale in mm/mV. Auto-calculated when ``None``.
+        speed : float, optional
+            Chart speed in mm/s (default: 25.0).
+        """
         pdfmetrics.registerFont(TTFont('sans-cond', 'fonts/DejaVuSansCondensed.ttf'))
         pdfmetrics.registerFont(TTFont('sans-mono', 'fonts/DejaVuSansMono.ttf'))
         pdfmetrics.registerFont(TTFont('sans-mono-bold', 'fonts/DejaVuSansMono-Bold.ttf'))
@@ -150,18 +197,22 @@ class ecg_plot():
 
 
     def axis_tick(self, x, y, s):
+        """Draw a small vertical tick mark at position (x, y)."""
         return self.draw_line(x, y-0.5, x, y+3, s)
 
 
     def draw_polyline(self, points, s):
+        """Create a ReportLab PolyLine shape from a flat list of coordinates."""
         return PolyLine(points, strokeColor=s.strokeColor, strokeWidth=s.strokeWidth, strokeLineJoin=s.strokeLineJoin)
 
 
     def draw_line(self, x0, y0, x1, y1, s):
+        """Create a ReportLab Line shape between two points (in mm)."""
         return Line(x0 * self.unit, y0 * self.unit, x1 * self.unit, y1 * self.unit, strokeColor=s.strokeColor, strokeWidth=s.strokeWidth)
 
 
     def draw_text(self, x, y, text, s):
+        """Create a ReportLab String shape at position (x, y) in mm."""
         s1 = String(x * self.unit, y * self.unit, text)
         s1.fontName = s.fontName
         s1.fontSize = s.fontSize
@@ -260,8 +311,8 @@ class ecg_plot():
     
 ############################################# Functions to draw information ######################################################
     
-    ########## Information about confidentiality number, age and sex ##############
     def add_ID_data(self, filename, database, age, sex):
+        """Add patient identification text (filename, ID, age, sex) to the header."""
         col_left = (
             '%s' % (filename,),
             'ID: %s' % (database,),
@@ -449,6 +500,19 @@ class ecg_plot():
                 
                 
 def Write_PDF(ecg: dict[str, np.ndarray], path_output: str, type_of_pdf: str, lead_IIc: str | np.ndarray = "") -> None:
+    """Render an ECG lead dictionary as a PDF file.
+
+    Parameters
+    ----------
+    ecg : dict[str, numpy.ndarray]
+        Leads keyed by name (e.g. ``"I"``, ``"V1"``).
+    path_output : str
+        Output PDF file path (relative to cwd).
+    type_of_pdf : str
+        Layout type: ``"type1"`` for 3x4, ``"type2"`` for 6x2.
+    lead_IIc : str or numpy.ndarray, optional
+        Full lead-II continuous signal for the rhythm strip (type1 only).
+    """
     initial_dir = os.getcwd()
     path_output = initial_dir + '/' + path_output
 
@@ -560,7 +624,17 @@ def Write_PDF(ecg: dict[str, np.ndarray], path_output: str, type_of_pdf: str, le
                 
                 
 def xml_to_pdf(path_input: str, path_output: str, type_of_pdf: str = 'type1') -> None:
-    #print(os.listdir())
+    """Convert an HL7 aECG XML file to a 12-lead ECG PDF.
+
+    Parameters
+    ----------
+    path_input : str
+        Path to the input XML file.
+    path_output : str
+        Path for the output PDF file.
+    type_of_pdf : str, optional
+        Layout: ``"type1"`` (3x4) or ``"type2"`` (6x2). Defaults to ``"type1"``.
+    """
     ecg = read_xml(path_input)
     Write_PDF (ecg, path_output, type_of_pdf)
     
