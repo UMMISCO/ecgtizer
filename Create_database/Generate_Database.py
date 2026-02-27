@@ -1,5 +1,3 @@
-import sys
-sys.path.append("../../ecgtizer_old/ecgtizer/ecgtizer/")
 from XML2PDF import Write_PDF
 import os
 import pandas as pd
@@ -512,8 +510,8 @@ def process_ecg(i, TYPE):
 
     return data
 
-def main(path_data = "ptb_xl/raw/physionet.org/files/ptb-xl/1.0.3/" , path_save = "ptb_xl/noised_images/temp/6x2/", 
-        path_save_xml = "../../../../../data/ecg/db_projects/physionet/ptb_xl/noised_images/temp/", TYPE):
+def main(TYPE, path_data = "ptb_xl/raw/physionet.org/files/ptb-xl/1.0.3/" , path_save = "ptb_xl/noised_images/temp/6x2/",
+        path_save_xml = "../../../../../data/ecg/db_projects/physionet/ptb_xl/noised_images/temp/"):
     # TYPE = 1 # 4x4 TYPE = 2 # 6x2
 
     ### Path des données PTB-XL
