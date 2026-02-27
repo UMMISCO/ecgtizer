@@ -37,6 +37,10 @@
 - [x] Add NumPy-style docstrings to XML2PDF.py (fix stale module docstring)
 - [x] Set up Sphinx documentation framework (docs/ directory, conf.py, 8 API RST pages)
 - [x] Add `[docs]` optional dependency group to pyproject.toml
+- [x] Add Sphinx docs build step to CI/CD workflow
+- [x] Add functional documentation with real examples for all 8 modules
+- [x] Add tests for anonymisation.py and XML2PDF.xml_to_pdf (+17 tests, fix xml_to_pdf type1 bug)
+- [x] Remove legacy setup.py (replaced by pyproject.toml)
 
 ---
 
@@ -48,9 +52,10 @@
 | PDF2XML_mod.py | 18 | 4 | 22 |
 | completion.py | 22 | 6 | 28 |
 | analyses.py | 18 | 1 | 19 |
-| XML2PDF.py | 17 | 5 | 22 |
+| XML2PDF.py | 21 | 9 | 30 |
+| anonymisation.py | 5 | 4 | 9 |
 | Integration (e2e) | - | 11 | 11 |
-| **Total** | **108** | **29** | **137** |
+| **Total** | **117** | **37** | **154** |
 
 ---
 
@@ -63,3 +68,4 @@
 | 2026-02-27 | fix/foundation-cleanup | Phase 3 complete: magic number constants, NumPy vectorization (5 loops), type hints on all public APIs, refactored monolithic functions |
 | 2026-02-27 | fix/foundation-cleanup | Phase 4 (4/5): pyproject.toml, GitHub Actions CI, pre-commit hooks, LICENSE file |
 | 2026-02-27 | fix/foundation-cleanup | Phase 4 (5/5) + Phase 5 complete: Sphinx docs, README rewrite, NumPy-style docstrings on all 72 public symbols |
+| 2026-02-27 | fix/foundation-cleanup | CI docs build, 17 new tests (anonymisation + XML2PDF), xml_to_pdf type1 bug fix, setup.py removal, functional docs with real examples |
