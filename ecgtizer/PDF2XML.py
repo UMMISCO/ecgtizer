@@ -64,7 +64,14 @@ LEAD_TIME_6X2 = {
 
 
 def _binarize_image(image: np.ndarray, TYPE: str, NOISE: bool | float) -> np.ndarray:
-    """Binarize a grayscale or BGR image using the appropriate thresholding method."""
+    """Binarize a grayscale or BGR image using the appropriate thresholding method.
+
+    For clean colour images (NOISE=False, not Wellue), Otsu thresholding is
+    followed by a colour-based filter that removes ECG grid lines.  Standard
+    ECG paper has an orange/pink grid whose brightest RGB channel is well above
+    128, whereas the black trace has max channel below 50.  Discarding lit
+    pixels with ``max(R,G,B) > 128`` cleanly separates trace from grid.
+    """
     if image.ndim == 3:
         img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
@@ -77,7 +84,67 @@ def _binarize_image(image: np.ndarray, TYPE: str, NOISE: bool | float) -> np.nda
         _, image_bin = cv2.threshold(img_blur, 127, 255, cv2.THRESH_BINARY_INV)
     else:
         _, image_bin = cv2.threshold(img_blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        # Remove coloured grid lines: on standard ECG paper the grid is
+        # orange/pink (max channel ~150-240) while the trace is black
+        # (max channel ~0-50).  Any lit pixel whose brightest channel
+        # exceeds 128 is grid, not trace.
+        if image.ndim == 3:
+            max_channel = np.max(image, axis=2)
+            image_bin[max_channel > 128] = 0
     return image_bin
+
+
+def _calibrate_from_binary(track_bin: np.ndarray, DPI: int = 0) -> tuple[float, float]:
+    """Measure the calibration square directly from a binary track image.
+
+    Examines the first 15 % of the track width (the reference pulse region)
+    and finds columns where the lit-pixel span is significantly larger than
+    the median trace thickness.  The vertical span of those columns gives
+    the true calibration height in pixels.
+
+    Returns (pixel_zero, factor).  ``pixel_zero`` is the baseline row
+    (bottom of the square) and ``factor`` is the square height in pixels,
+    corresponding to 1 mV on the ECG.  Falls back to a DPI-based estimate
+    when the square cannot be detected.
+    """
+    h, w = track_bin.shape
+    ref_width = max(10, int(0.15 * w))
+    ref_region = track_bin[:, :ref_width]
+
+    # Per-column: lit pixel span (max_row - min_row)
+    spans = np.zeros(ref_width)
+    baselines = np.zeros(ref_width)
+    for c in range(ref_width):
+        lit = np.where(ref_region[:, c] == 255)[0]
+        if len(lit) >= 2:
+            spans[c] = lit[-1] - lit[0]
+            baselines[c] = float(lit[-1])  # bottom-most lit pixel
+
+    # The calibration square has a much larger span than the thin trace
+    valid = spans > 0
+    if np.sum(valid) < 3:
+        # Not enough data — DPI fallback
+        f = (10 * DPI) / 25.4 if DPI > 0 else 1.0
+        pixel_zero = float(h / 2)
+        return pixel_zero, f
+
+    median_span = float(np.median(spans[valid]))
+    # Square columns have span at least 3× the median trace thickness
+    square_mask = spans > max(median_span * 3, 10)
+    if np.sum(square_mask) < 3:
+        # No clear square detected — DPI fallback
+        f = (10 * DPI) / 25.4 if DPI > 0 else 1.0
+        pixel_zero = float(np.median(baselines[valid]))
+        return pixel_zero, f
+
+    # The calibration factor is the median span in the square columns
+    f = float(np.median(spans[square_mask]))
+    # The baseline (pixel_zero) is the bottom of the square = bottom of trace
+    pixel_zero = float(np.median(baselines[square_mask]))
+
+    if f < 1:
+        f = (10 * DPI) / 25.4 if DPI > 0 else 1.0
+    return pixel_zero, f
 
 
 def _calibrate_ref_pulse(ref_pulse: np.ndarray, DPI: int = 0) -> tuple[float, float]:
@@ -420,28 +487,40 @@ def tracks_extraction(image: np.ndarray, TYPE: str, DPI: int, FORMAT: str, NOISE
         plt.figure(figsize = (20,20))
         
     
-    # Define a list with all the position to cut between tracks a we store the beggining of the image
-    cut_pos = [0]
-    # for all peaks we only keep the position between them
-    for p in range(len(peaksh)-1):
-        cut_pos.append(int((peaksh[p]+peaksh[p+1])/2))
-    # We store the ending of the image
-    cut_pos.append(len(image))
-    
-    # If we have 6 tracks we have extracted text information
+    # Define a list with all the position to cut between tracks
+    cut_pos = []
+    if len(peaksh) >= 2:
+        # Use the typical inter-peak spacing to estimate where track 0
+        # starts.  The first cut should be half a track above the first
+        # peak rather than at row 0, which would include blank header.
+        typical_gap = int(np.median(np.diff(peaksh)))
+        first_cut = max(0, peaksh[0] - typical_gap // 2)
+        cut_pos.append(first_cut)
+        for p in range(len(peaksh) - 1):
+            cut_pos.append(int((peaksh[p] + peaksh[p + 1]) / 2))
+        last_cut = min(len(image), peaksh[-1] + typical_gap // 2)
+        cut_pos.append(last_cut)
+    else:
+        # Fallback: use old behaviour
+        cut_pos = [0]
+        for p in range(len(peaksh) - 1):
+            cut_pos.append(int((peaksh[p] + peaksh[p + 1]) / 2))
+        cut_pos.append(len(image))
+
+    # If we have 6 cuts we have extracted text information
     if len(cut_pos) == 6:
         del cut_pos[0]
-    
-    # We store all track image in the dictionary 
+
+    # We store all track image in the dictionary
     it = 1
     for c in range(len(cut_pos)-1):
         if it == 1:
-            dic_tracks[c] = image_bin[cut_pos[c]+int(0.05*len(image)):cut_pos[c+1]]
+            dic_tracks[c] = image_bin[cut_pos[c]+int(0.02*len(image)):cut_pos[c+1]]
         elif it == len(cut_pos)-1:
-            dic_tracks[c] = image_bin[cut_pos[c]:cut_pos[c+1]-int(0.09*len(image))]
+            dic_tracks[c] = image_bin[cut_pos[c]:cut_pos[c+1]-int(0.02*len(image))]
         else:
             dic_tracks[c] = image_bin[cut_pos[c]:cut_pos[c+1]]
-            
+
         it+=1
         
         if DEBUG:
@@ -696,10 +775,10 @@ def lead_extraction(dic_tracks: dict[int, np.ndarray], extraction_method: str, T
 
 
 
-def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT: str, page: int, NOISE: bool | float, DEBUG: bool) -> dict[str, np.ndarray] | np.ndarray:
+def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT: str, page: int, NOISE: bool | float, DEBUG: bool, dic_image_bin: dict[int, np.ndarray] | None = None) -> dict[str, np.ndarray] | np.ndarray:
     """
     Cut each tracks into leads
-    
+
     Parameters
     ----------
     dic_tracks: dictionary, dictionary of track images
@@ -707,7 +786,8 @@ def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT:
     TYPE  : str, format of the image
     NOISE : bool, if the image is noised or not
     DEBUG : bool, show the image
-    
+    dic_image_bin : dict, optional binary track images for calibration
+
     Returns
     -------
     dictionary: dictionary of leads
@@ -728,6 +808,7 @@ def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT:
             else:
                 LENGTH_PULSE       = 0
             
+        dic_time = {}
         # The disposition of the ECG is 4x4
         if len(dic_tracks) == 4:
             # leads lasts 2.5sec if there are 4 tracks
@@ -765,33 +846,48 @@ def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT:
             4 : "AVL",
             5 : "AVF",}
         
+        # Pre-compute calibration factors for all tracks.
+        # When binary track images are available (dic_image_bin), measure the
+        # calibration square height directly from the image for higher accuracy.
+        # Then cross-validate across tracks to replace outlier values.
+        _calib = {}  # {track_idx: (pixel_zero, f, LENGTH_PULSE)}
+        if TYPE.lower() != 'kardia':
+            for t in dic_tracks:
+                _lp = REF_PULSE_CLASSIC
+                if len(dic_tracks) in (4, 6):
+                    _lp = len(dic_tracks[t]) - SIGNAL_LENGTH_STANDARD
+
+                # Prefer binary-image calibration (measures actual square height)
+                if dic_image_bin is not None and t in dic_image_bin:
+                    _pz, _f = _calibrate_from_binary(dic_image_bin[t], DPI)
+                else:
+                    _ref = dic_tracks[t][:_lp]
+                    _pz = float(max(_ref))
+                    _p1 = float(min(_ref))
+                    _f = _pz - _p1
+                _calib[t] = (_pz, max(_f, 0.001), _lp)
+            # Cross-validate: replace outlier f values with the max
+            if len(_calib) > 1:
+                all_f = [v[1] for v in _calib.values()]
+                best_f = max(all_f)
+                for t in _calib:
+                    pz, f_val, lp = _calib[t]
+                    if f_val < 0.5 * best_f:
+                        logger.info("Track %d: calibration f=%.1f replaced by %.1f", t, f_val, best_f)
+                        _calib[t] = (pz, best_f, lp)
+
         # Plot each tracks
         for t in dic_tracks:
             if DEBUG:
                 LENGTH_PULSE = 140
                 logger.debug("Track: %s", t)
                 plt.figure(figsize = (20,14))
-                plt.plot(dic_tracks[t])     
+                plt.plot(dic_tracks[t])
                 plt.axvline(LENGTH_PULSE, c = 'r')
 
             if TYPE.lower() != 'kardia':
-                # Isolate the reference pulse
-                LENGTH_PULSE = REF_PULSE_CLASSIC
-                if len(dic_tracks) == 4:
-                    LENGTH_PULSE = len(dic_tracks[t]) - SIGNAL_LENGTH_STANDARD
-
-                elif len(dic_tracks) == 6:
-                    LENGTH_PULSE = len(dic_tracks[t]) - SIGNAL_LENGTH_STANDARD
-                dic_ref_pulse[t] = dic_tracks[t][ : LENGTH_PULSE ] 
-                
-                # Pixel of amplitude 0mV
-                pixel_zero = max(dic_ref_pulse[t])
-                # Pixel of amplitude 1mV
-                pixel_one  = min(dic_ref_pulse[t]) 
-                # Define the factor
-                f = pixel_zero - pixel_one 
-                if f == 0:
-                    f = 1
+                pixel_zero, f, LENGTH_PULSE = _calib[t]
+                dic_ref_pulse[t] = dic_tracks[t][ : LENGTH_PULSE ]
 
                 
                 # Define the beggining of lead part

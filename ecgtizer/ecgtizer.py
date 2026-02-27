@@ -241,7 +241,7 @@ class ECGtizer:
             if Callback is not None:
                 Callback("--- Lead detection : ", end='')
                 start = time.time()
-            dic_lead = lead_cutting(dic_tracks_ex, dpi,TYPE, FORMAT, page, NOISE = NOISE,  DEBUG = DEBUG )
+            dic_lead = lead_cutting(dic_tracks_ex, dpi,TYPE, FORMAT, page, NOISE = NOISE,  DEBUG = DEBUG, dic_image_bin=image_bin )
             if verbose:
                 logger.info("Lead detection: OK (%.2fs)", time.time() - start)
             if Callback is not None:
