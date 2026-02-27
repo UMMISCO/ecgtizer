@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 from pdf2image import convert_from_path, exceptions
-from .extraction_functions import *
+from .extraction_functions import lazy_extraction, full_extraction, fragmented_extraction
 import cv2
 from scipy import signal
 from scipy.signal import find_peaks
