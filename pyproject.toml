@@ -50,6 +50,11 @@ dev = [
     "mypy",
     "pre-commit",
 ]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints",
+]
 
 [tool.setuptools.packages.find]
 include = ["ecgtizer*"]
