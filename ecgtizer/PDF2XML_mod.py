@@ -1,7 +1,6 @@
 import os
 import matplotlib.pyplot as plt
-import xml.etree.cElementTree as ET
-from xml.etree import ElementTree
+import xml.etree.ElementTree as ET
 from os.path import isfile,join, isdir, exists
 from os import listdir, makedirs
 import xmltodict as xml
