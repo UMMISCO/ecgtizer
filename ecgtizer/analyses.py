@@ -22,6 +22,18 @@ import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
 def read_lead(lead_str: str) -> list[int]:
+    """Parse a space-separated string of numeric values into a list of ints.
+
+    Parameters
+    ----------
+    lead_str : str
+        Space-separated signal values (e.g. from an XML digits element).
+
+    Returns
+    -------
+    list[int]
+        Parsed integer values. Non-numeric tokens are replaced with ``0``.
+    """
     lead = []
     lead_str = lead_str.split(' ')
     for l in lead_str:
@@ -33,6 +45,18 @@ def read_lead(lead_str: str) -> list[int]:
     return(lead)
 
 def read_xml(file: str) -> dict[str, np.ndarray]:
+    """Read an HL7 aECG XML file and return leads as NumPy arrays.
+
+    Parameters
+    ----------
+    file : str
+        Path to the XML file.
+
+    Returns
+    -------
+    dict[str, numpy.ndarray]
+        Leads keyed by name (e.g. ``"I"``, ``"V1"``), values in microvolts.
+    """
     matrix = {}
     with open(file) as fd:
         doc = xml.parse(fd.read())
@@ -48,8 +72,24 @@ def read_xml(file: str) -> dict[str, np.ndarray]:
 
 
 def alignement(lead1: np.ndarray, lead2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Align two lead signals using Pearson-correlation sliding window.
 
-    
+    The shorter signal is slid along the longer one to find the offset
+    that maximizes correlation. Signals longer than
+    ``MAX_ALIGNMENT_LENGTH`` are downsampled before alignment.
+
+    Parameters
+    ----------
+    lead1 : numpy.ndarray
+        First lead signal.
+    lead2 : numpy.ndarray
+        Second lead signal.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Aligned pair of signals with equal length.
+    """
     a = 0
     if len(lead1) > len(lead2):
         lead1, lead2 = [lead2,lead1]
@@ -89,6 +129,23 @@ def alignement(lead1: np.ndarray, lead2: np.ndarray) -> tuple[np.ndarray, np.nda
 
 
 def analyse(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray]) -> dict[str, dict[str, float]]:
+    """Compute correlation, RMSE and DTW distance between two ECG recordings.
+
+    Accepts either XML file paths or pre-loaded lead dictionaries.
+
+    Parameters
+    ----------
+    file1 : str or dict[str, numpy.ndarray]
+        First recording (path to XML or lead dictionary).
+    file2 : str or dict[str, numpy.ndarray]
+        Second recording (path to XML or lead dictionary).
+
+    Returns
+    -------
+    dict[str, dict[str, float]]
+        Nested dictionary with keys ``"corr"``, ``"mse"`` and ``"dtw"``,
+        each mapping lead names to their metric values.
+    """
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):
@@ -114,6 +171,19 @@ def analyse(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarra
 
 
 def BlandAltman(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray], lead: str = '', save: str | bool = False) -> None:
+    """Generate Bland-Altman agreement plots for one or all leads.
+
+    Parameters
+    ----------
+    file1 : str or dict[str, numpy.ndarray]
+        First recording (path to XML or lead dictionary).
+    file2 : str or dict[str, numpy.ndarray]
+        Second recording (path to XML or lead dictionary).
+    lead : str, optional
+        Single lead name to plot. When empty, all leads are plotted.
+    save : str or bool, optional
+        Directory path to save PNG figures, or ``False`` to display only.
+    """
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):
@@ -141,6 +211,20 @@ def BlandAltman(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.nd
 
         
 def compute_slope(l1: np.ndarray, l2: np.ndarray) -> float:
+    """Compute the regression slope between two signals.
+
+    Parameters
+    ----------
+    l1 : numpy.ndarray
+        Dependent variable signal.
+    l2 : numpy.ndarray
+        Independent variable signal.
+
+    Returns
+    -------
+    float
+        Slope of the linear regression.
+    """
     r, _ = pearsonr(l1, l2)
     std_Y = np.std(l1)
     std_X = np.std(l2)
@@ -148,6 +232,19 @@ def compute_slope(l1: np.ndarray, l2: np.ndarray) -> float:
     return(slope)
     
 def scatter_plot(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray], lead: str = '', save: str | bool = False) -> None:
+    """Generate scatter plots with linear regression for one or all leads.
+
+    Parameters
+    ----------
+    file1 : str or dict[str, numpy.ndarray]
+        First recording (path to XML or lead dictionary).
+    file2 : str or dict[str, numpy.ndarray]
+        Second recording (path to XML or lead dictionary).
+    lead : str, optional
+        Single lead name to plot. When empty, all leads are plotted.
+    save : str or bool, optional
+        File path prefix to save PNG figures, or ``False`` to display only.
+    """
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):
@@ -203,6 +300,19 @@ def scatter_plot(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.n
     
     
 def overlap_plot(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray], lead: str = '', save: str | bool = False) -> None:
+    """Overlay two ECG recordings on the same plot for visual comparison.
+
+    Parameters
+    ----------
+    file1 : str or dict[str, numpy.ndarray]
+        First recording (path to XML or lead dictionary), shown in red.
+    file2 : str or dict[str, numpy.ndarray]
+        Second recording (path to XML or lead dictionary), shown in green.
+    lead : str, optional
+        Single lead name to plot. When empty, all leads are plotted.
+    save : str or bool, optional
+        File path prefix to save PNG figures, or ``False`` to display only.
+    """
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):

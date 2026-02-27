@@ -23,6 +23,8 @@ RESAMPLED_FREQ = 512           # Hz
 
 
 class Convolution1D_layer(nn.Module):
+    """1-D convolution applied independently to each of the 12 leads."""
+
     def __init__(self, in_f, out_f, device):
         super(Convolution1D_layer, self).__init__()
         self.f = out_f
@@ -44,6 +46,8 @@ class Convolution1D_layer(nn.Module):
 
 
 class Deconvolution1D_layer(nn.Module):
+    """1-D transposed convolution (upsampling) applied per lead."""
+
     def __init__(self, in_f, out_f, device):
         super(Deconvolution1D_layer, self).__init__()
         self.device = device
@@ -64,6 +68,8 @@ class Deconvolution1D_layer(nn.Module):
         return(new_x)
             
 class Convolution2D_layer(nn.Module):
+    """2-D convolution across leads and time simultaneously."""
+
     def __init__(self, in_f, out_f):
         super(Convolution2D_layer, self).__init__()        
         self.conv = nn.Sequential(
@@ -80,6 +86,8 @@ class Convolution2D_layer(nn.Module):
 
 
 class Deconvolution2D_layer(nn.Module):
+    """2-D transposed convolution (upsampling) across leads and time."""
+
     def __init__(self, in_f, out_f):
         super(Deconvolution2D_layer, self).__init__()
         self.f = out_f
@@ -97,6 +105,13 @@ class Deconvolution2D_layer(nn.Module):
 
             
 class Autoencoder_net(nn.Module):
+    """Dual-path (1-D + 2-D) convolutional autoencoder for ECG completion.
+
+    The encoder applies parallel 1-D (per-lead) and 2-D (cross-lead)
+    convolutions, concatenates their feature maps, and the decoder
+    mirrors this structure with skip connections from the encoder.
+    """
+
     def __init__(self, device):
         super(Autoencoder_net, self).__init__()
         self.first_conv2D = Convolution2D_layer(1,16)
@@ -192,6 +207,18 @@ class Autoencoder_net(nn.Module):
         return(out)
 
 def linear_interpolation(signal: np.ndarray) -> np.ndarray:
+    """Resample a signal to ``SIGNAL_LENGTH`` (5000) samples via linear interpolation.
+
+    Parameters
+    ----------
+    signal : numpy.ndarray
+        Input signal of arbitrary length.
+
+    Returns
+    -------
+    numpy.ndarray
+        Resampled signal with ``SIGNAL_LENGTH`` samples.
+    """
     original_length = len(signal)
     new_length = SIGNAL_LENGTH
 
@@ -208,10 +235,43 @@ def linear_interpolation(signal: np.ndarray) -> np.ndarray:
     return interpolated_signal
     
 def denormalization(signal: np.ndarray, original_min: float, original_max: float) -> np.ndarray:
+    """Reverse min-max normalization from [-1, 1] back to original scale.
+
+    Parameters
+    ----------
+    signal : numpy.ndarray
+        Normalized signal in the range [-1, 1].
+    original_min : float
+        Original minimum value used during normalization.
+    original_max : float
+        Original maximum value used during normalization.
+
+    Returns
+    -------
+    numpy.ndarray
+        Signal restored to its original amplitude range.
+    """
     denormalized_signal = (signal + 1) * (original_max - original_min) / 2 + original_min
     return denormalized_signal
 
 def normalization(Z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Bandpass-filter, resample and normalize a multi-lead signal matrix.
+
+    Applies a 4th-order Butterworth bandpass filter, resamples to
+    ``RESAMPLED_LENGTH`` (512) samples, and normalizes to [-1, 1].
+
+    Parameters
+    ----------
+    Z : numpy.ndarray
+        Signal matrix of shape ``(num_samples, num_leads)``.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        ``(normalized_matrix, scale_matrix)`` where *normalized_matrix*
+        has shape ``(RESAMPLED_LENGTH, num_leads)`` and *scale_matrix*
+        has shape ``(num_leads, 2)`` with ``[min, max]`` per lead.
+    """
     new_Z = np.zeros((RESAMPLED_LENGTH,len(Z)))
     scale_Z = np.zeros((len(Z),2))
     for i in range(len(Z)):
@@ -235,10 +295,40 @@ def normalization(Z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         scale_Z[i,:] = [mini,maxi]
     return(new_Z, scale_Z)
 def normalization2(Z: np.ndarray) -> tuple[np.ndarray, float, float]:
+    """Min-max normalize a signal to the range [-1, 1].
+
+    Parameters
+    ----------
+    Z : numpy.ndarray
+        Input signal.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, float, float]
+        ``(normalized_signal, min_value, max_value)``.
+    """
     mini=Z.min()
     maxi=Z.max()
     return(-1+((Z-mini)*(2))/(maxi-mini), mini,maxi)
 def replace_random(array: np.ndarray, True_data: bool = False) -> tuple[np.ndarray, np.ndarray]:
+    """Prepare an ECG matrix as model input with partial masking.
+
+    Maps each lead's known time segment into a random-initialized
+    tensor of shape ``(1, 12, 512)``. When ``True_data`` is ``True``,
+    the full signal is used without masking.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Multi-lead signal matrix of shape ``(num_leads, num_samples)``.
+    True_data : bool, optional
+        If ``True``, fill the entire tensor with real data (no masking).
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        ``(input_tensor, scale_matrix)`` ready for model inference.
+    """
     if len(array) == 13:
         dic_split = {0 : (0,128),1 : (0,512),2 : (0,128),
                 3 : (128,256),4 : (128,256),5 : (128,256),
@@ -260,6 +350,20 @@ def replace_random(array: np.ndarray, True_data: bool = False) -> tuple[np.ndarr
 
 
 def load_model(path: str, device: str) -> Autoencoder_net:
+    """Load a pre-trained autoencoder from a ``.pth`` weights file.
+
+    Parameters
+    ----------
+    path : str
+        Path to the model weights file.
+    device : str
+        PyTorch device string (e.g. ``"cpu"`` or ``"cuda"``).
+
+    Returns
+    -------
+    Autoencoder_net
+        Model in evaluation mode.
+    """
     model = Autoencoder_net(device)
     model.load_state_dict(torch.load(path, map_location=torch.device(device)))
     model.eval()
@@ -267,6 +371,25 @@ def load_model(path: str, device: str) -> Autoencoder_net:
 
 
 def completion_(ecg: dict[str, np.ndarray], path_model: str, device: str) -> dict[str, np.ndarray]:
+    """Complete partial ECG leads to full 10-second recordings.
+
+    Normalizes and resamples the input leads, runs them through the
+    autoencoder, then denormalizes and resamples back to 5000 samples.
+
+    Parameters
+    ----------
+    ecg : dict[str, numpy.ndarray]
+        Extracted leads keyed by name.
+    path_model : str
+        Path to the ``.pth`` model weights.
+    device : str
+        PyTorch device string.
+
+    Returns
+    -------
+    dict[str, numpy.ndarray]
+        Completed leads with 5000 samples each.
+    """
     model = load_model(path_model, device)
     if 'IIc' in ecg.keys():
         dic_sorted = ['I', 'IIc', 'III', 'AVL', 'AVR', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']

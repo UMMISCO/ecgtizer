@@ -11,9 +11,23 @@ from __future__ import annotations
 import numpy as np
 import cv2
 
-### Strength: Fast, efficient and allows you to partially ignore annotations in the image
-### Weakness: Smoothes signals and crushes peaks
 def lazy_extraction(image_bin: np.ndarray) -> list[int]:
+    """Extract a waveform by following the nearest lit pixel from an anchor.
+
+    Fast and noise-tolerant. Starts from the average lit-pixel position
+    in the first column and walks column-by-column, always jumping to the
+    closest lit pixel within a 1000-pixel window.
+
+    Parameters
+    ----------
+    image_bin : numpy.ndarray
+        Binarized track image (255 = signal, 0 = background).
+
+    Returns
+    -------
+    list[int]
+        Vertical pixel positions representing the extracted waveform.
+    """
     # We define a starting pixel which corresponds to our anchor point - the extraction will start from this point
     # We look for all the lit pixels in the first column and average over them
     first_pixel_position = []
@@ -50,18 +64,46 @@ def lazy_extraction(image_bin: np.ndarray) -> list[int]:
     return signal
 
 
-### Strengths: Fast, allows partial account to be taken of noise in the signal, low peak crushing
-### Weakness: Also extracts pixels that are not part of the signal
 def full_extraction(image_bin: np.ndarray) -> np.ndarray:
+    """Extract a waveform by averaging all lit-pixel positions per column.
+
+    Fast with high fidelity. Computes the mean row position of all lit
+    pixels in each column. May include annotation artifacts if text
+    overlaps the signal region.
+
+    Parameters
+    ----------
+    image_bin : numpy.ndarray
+        Binarized track image (255 = signal, 0 = background).
+
+    Returns
+    -------
+    numpy.ndarray
+        Mean vertical positions per column.
+    """
     # We look at all the columns in the image and average the position of the lit pixels
     extraction = np.array([sum(i for i, valeur in enumerate(ligne) if valeur == 255) / (ligne.count(255)+0.01) for ligne in image_bin.T.tolist()])
     return extraction
 
 
 
-### Strength: Extracts only the signal, even if the labels are present.
-### Weakness: Slower than other methods
 def fragmented_extraction(image_bin: np.ndarray) -> list[float]:
+    """Extract a waveform using contour-based fragment detection.
+
+    Slower but highest fidelity. Groups consecutive lit pixels into
+    fragments per column. When multiple fragments exist (e.g. signal
+    plus text label), selects the last fragment as the signal.
+
+    Parameters
+    ----------
+    image_bin : numpy.ndarray
+        Binarized track image (255 = signal, 0 = background).
+
+    Returns
+    -------
+    list[float]
+        Mean vertical positions per column (from the signal fragment).
+    """
     # Look at all the columns in the image and store the lit pixels. 
     # if there's a gap between two lit pixels, we store them in a new list
     signal = []
