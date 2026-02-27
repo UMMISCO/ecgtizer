@@ -7,7 +7,7 @@ and produces a graph in PDF (vector) or PNG (raster) format.
 Required custom modules: ecg_contec.py, which requires ecg_scp.py
 Required Python packages: python3-numpy python3-scipy python3-reportlab
 """
-
+from __future__ import annotations
 
 from os.path import isfile,join, isdir, exists
 from os import listdir, makedirs
@@ -33,7 +33,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 import os
 
 
-def read_lead(lead_str):
+def read_lead(lead_str: str) -> list[int | float]:
     lead = []
     lead_str = lead_str.split(' ')
     for l in lead_str:
@@ -43,7 +43,7 @@ def read_lead(lead_str):
             lead.append(np.nan)
     return(lead)
 
-def read_xml(file):
+def read_xml(file: str) -> dict[str, np.ndarray]:
     matrix = {}
     with open(file) as fd:
         doc = xml.parse(fd.read())
@@ -449,7 +449,7 @@ class ecg_plot():
                 self.draw.add(self.draw_polyline(p, self.sty_line_plot))
                 
                 
-def Write_PDF (ecg, path_output, type_of_pdf, lead_IIc = ""):
+def Write_PDF(ecg: dict[str, np.ndarray], path_output: str, type_of_pdf: str, lead_IIc: str | np.ndarray = "") -> None:
     initial_dir = os.getcwd()
     path_output = initial_dir + '/' + path_output
 
@@ -560,7 +560,7 @@ def Write_PDF (ecg, path_output, type_of_pdf, lead_IIc = ""):
     os.chdir(initial_dir)       
                 
                 
-def xml_to_pdf(path_input, path_output,  type_of_pdf = 'type1'):
+def xml_to_pdf(path_input: str, path_output: str, type_of_pdf: str = 'type1') -> None:
     #print(os.listdir())
     ecg = read_xml(path_input)
     Write_PDF (ecg, path_output, type_of_pdf)

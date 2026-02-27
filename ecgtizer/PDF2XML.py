@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import numpy as np
@@ -55,7 +57,7 @@ LEAD_TIME_6X2 = {
 
 
 
-def convert_PDF2image(path_input, DPI):
+def convert_PDF2image(path_input: str, DPI: int) -> np.ndarray:
     
     """
     Convert the PDF file into array (images).
@@ -83,7 +85,7 @@ def convert_PDF2image(path_input, DPI):
 
 
 
-def check_noise_type(image, DPI, DEBUG):
+def check_noise_type(image: np.ndarray, DPI: int, DEBUG: bool) -> tuple[str, bool | float]:
     
     """
     Check the noise level of the image. Check the type of the image.
@@ -161,7 +163,7 @@ def check_noise_type(image, DPI, DEBUG):
             return('classic', NOISE)
         
         
-def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
+def text_extraction(image: np.ndarray, page: int, DPI: int, NOISE: bool | float, TYPE: str, DEBUG: bool) -> tuple[dict, np.ndarray, str, str]:
     
     """
     Extract the texte from the image and mask the task on the image
@@ -286,7 +288,7 @@ def text_extraction(image,page, DPI, NOISE, TYPE,  DEBUG):
 
 
 
-def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
+def tracks_extraction(image: np.ndarray, TYPE: str, DPI: int, FORMAT: str, NOISE: bool | float = False, DEBUG: bool = False) -> dict[int, np.ndarray]:
     
     """
     Extract the tracks from the image
@@ -475,7 +477,7 @@ def tracks_extraction(image, TYPE, DPI, FORMAT, NOISE = False, DEBUG = False):
 
 
 
-def clean_tracks(dic_tracks, TYPE, NOISE, DEBUG):
+def clean_tracks(dic_tracks: dict[int, np.ndarray], TYPE: str, NOISE: bool | float, DEBUG: bool) -> dict[int, np.ndarray]:
     
     """
     Detect all groups of pixels and remove them
@@ -551,7 +553,7 @@ def clean_tracks(dic_tracks, TYPE, NOISE, DEBUG):
                 plt.imshow(im2)
             plt.show()
         
-def sup_holes(signal, TYPE):
+def sup_holes(signal: list | np.ndarray, TYPE: str) -> np.ndarray:
     
     """
     Fill the holes in the extracted signal
@@ -604,7 +606,7 @@ def sup_holes(signal, TYPE):
     return(signal[:end])
 
 
-def lead_extraction(dic_tracks, extraction_method, TYPE, NOISE, DEBUG = False):
+def lead_extraction(dic_tracks: dict[int, np.ndarray], extraction_method: str, TYPE: str, NOISE: bool | float, DEBUG: bool = False) -> dict[str, np.ndarray]:
     
     """
     Extract the digital information from images
@@ -674,7 +676,7 @@ def lead_extraction(dic_tracks, extraction_method, TYPE, NOISE, DEBUG = False):
 
 
 
-def lead_cutting(dic_tracks, DPI, TYPE, FORMAT, page, NOISE, DEBUG):
+def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT: str, page: int, NOISE: bool | float, DEBUG: bool) -> dict[str, np.ndarray] | np.ndarray:
     """
     Cut each tracks into leads
     

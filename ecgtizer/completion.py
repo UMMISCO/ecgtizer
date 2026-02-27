@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import torch.nn as nn
 import torch
 import numpy as np
@@ -183,7 +185,7 @@ class Autoencoder_net(nn.Module):
         out = torch.squeeze(out,1)
         return(out)
 
-def linear_interpolation(signal):
+def linear_interpolation(signal: np.ndarray) -> np.ndarray:
     original_length = len(signal)
     new_length = SIGNAL_LENGTH
 
@@ -199,11 +201,11 @@ def linear_interpolation(signal):
 
     return interpolated_signal
     
-def denormalization(signal, original_min, original_max):
+def denormalization(signal: np.ndarray, original_min: float, original_max: float) -> np.ndarray:
     denormalized_signal = (signal + 1) * (original_max - original_min) / 2 + original_min
     return denormalized_signal
 
-def normalization(Z):
+def normalization(Z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     new_Z = np.zeros((RESAMPLED_LENGTH,len(Z)))
     scale_Z = np.zeros((len(Z),2))
     for i in range(len(Z)):
@@ -226,11 +228,11 @@ def normalization(Z):
         new_Z[:,i] = resampled_signal
         scale_Z[i,:] = [mini,maxi]
     return(new_Z, scale_Z)
-def normalization2(Z):
+def normalization2(Z: np.ndarray) -> tuple[np.ndarray, float, float]:
     mini=Z.min()
     maxi=Z.max()
     return(-1+((Z-mini)*(2))/(maxi-mini), mini,maxi)
-def replace_random(array, True_data = False):
+def replace_random(array: np.ndarray, True_data: bool = False) -> tuple[np.ndarray, np.ndarray]:
     if len(array) == 13:
         dic_split = {0 : (0,128),1 : (0,512),2 : (0,128),
                 3 : (128,256),4 : (128,256),5 : (128,256),
@@ -251,14 +253,14 @@ def replace_random(array, True_data = False):
     return(final_matrix, scale)
 
 
-def load_model(path, device):
+def load_model(path: str, device: str) -> Autoencoder_net:
     model = Autoencoder_net(device)
     model.load_state_dict(torch.load(path, map_location=torch.device(device)))
     model.eval()
     return model
 
 
-def completion_(ecg, path_model, device):
+def completion_(ecg: dict[str, np.ndarray], path_model: str, device: str) -> dict[str, np.ndarray]:
     model = load_model(path_model, device)
     if 'IIc' in ecg.keys():
         dic_sorted = ['I', 'IIc', 'III', 'AVL', 'AVR', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']

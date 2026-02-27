@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 # --- Signal parameters ---
@@ -13,7 +15,7 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
-def read_lead(lead_str):
+def read_lead(lead_str: str) -> list[int]:
     lead = []
     lead_str = lead_str.split(' ')
     for l in lead_str:
@@ -24,7 +26,7 @@ def read_lead(lead_str):
            
     return(lead)
 
-def read_xml(file):
+def read_xml(file: str) -> dict[str, np.ndarray]:
     matrix = {}
     with open(file) as fd:
         doc = xml.parse(fd.read())
@@ -39,7 +41,7 @@ def read_xml(file):
     return(matrix)
 
 
-def alignement(lead1, lead2):
+def alignement(lead1: np.ndarray, lead2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     
     a = 0
@@ -80,7 +82,7 @@ def alignement(lead1, lead2):
     return(lead1, lead2)
 
 
-def analyse(file1, file2):
+def analyse(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray]) -> dict[str, dict[str, float]]:
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):
@@ -105,7 +107,7 @@ def analyse(file1, file2):
 
 
 
-def BlandAltman(file1, file2, lead = '', save = False):
+def BlandAltman(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray], lead: str = '', save: str | bool = False) -> None:
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):
@@ -132,14 +134,14 @@ def BlandAltman(file1, file2, lead = '', save = False):
         
 
         
-def compute_slope(l1, l2):
+def compute_slope(l1: np.ndarray, l2: np.ndarray) -> float:
     r, _ = pearsonr(l1, l2)
     std_Y = np.std(l1)
     std_X = np.std(l2)
     slope = r * (std_Y / std_X)
     return(slope)
     
-def scatter_plot(file1, file2, lead = '', save = False):
+def scatter_plot(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray], lead: str = '', save: str | bool = False) -> None:
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):
@@ -194,7 +196,7 @@ def scatter_plot(file1, file2, lead = '', save = False):
         plt.show()
     
     
-def overlap_plot(file1, file2, lead = '', save = False):
+def overlap_plot(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.ndarray], lead: str = '', save: str | bool = False) -> None:
     if isinstance(file1, str):
         file1 = read_xml(file1)
     if isinstance(file2, str):

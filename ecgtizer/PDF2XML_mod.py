@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import matplotlib.pyplot as plt
@@ -10,7 +12,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, transparent = False):
+def plot_function(lead_all: dict[str, np.ndarray], lead: str = '', b: int = 0, e: str | int = 'inf', c: str | None = None, save: str | bool = False, transparent: bool = False) -> None:
     """
     Main function to write the XML from the numpy extracted ECG
     
@@ -151,7 +153,7 @@ def plot_function(lead_all,lead = '', b = 0, e = 'inf', c = None, save = False, 
             plt.savefig(name, transparent=transparent)
         plt.show()
 
-def plot_overlay(lead,image, piqueh, piquev):
+def plot_overlay(lead: dict[str, np.ndarray], image: np.ndarray, piqueh: list, piquev: list) -> None:
     plt.imshow(image, cmap = 'gray')
     for i in range(len(piqueh)):
         median = np.median(lead[i])
@@ -493,7 +495,7 @@ Low_freq, High_freq, BPM, PR, QRS, QT, QTc, P, R, T, moyRR, QTcB, QTcF, Rythme, 
         tree.write(path_out)
 
 
-def transform_np2txt(arr):
+def transform_np2txt(arr: np.ndarray) -> str:
     """Transform a numpy array into a space-separated string."""
     values = arr.tolist()
     txt = ''
@@ -503,7 +505,7 @@ def transform_np2txt(arr):
     return(txt)
 
 # We transform time into a correct format
-def conversion_time (day, month, year, hour):
+def conversion_time(day: str, month: str, year: str, hour: str) -> tuple[str, str]:
     month_dic = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08',
                  'Sep':'09','Oct':'10','Nov':'11','Dec':'12', 'unknow' : '00'}
     if hour == 'unknow':
@@ -521,7 +523,7 @@ def conversion_time (day, month, year, hour):
     return(convert)
 
 # Main function
-def write_xml (matrix, path_out, TYPE = '', table = '',  num_version = '0.0', date_version  = "27.O6.2022"): 
+def write_xml(matrix: dict[str, np.ndarray], path_out: str, TYPE: str = '', table: str = '', num_version: str = '0.0', date_version: str = "27.O6.2022") -> None: 
     """
     Main function to write the XML from the numpy extracted ECG
     

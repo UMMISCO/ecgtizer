@@ -1,10 +1,11 @@
+from __future__ import annotations
 
 import numpy as np
 import cv2
 
 ### Strength: Fast, efficient and allows you to partially ignore annotations in the image
 ### Weakness: Smoothes signals and crushes peaks
-def lazy_extraction(image_bin):
+def lazy_extraction(image_bin: np.ndarray) -> list[int]:
     # We define a starting pixel which corresponds to our anchor point - the extraction will start from this point
     # We look for all the lit pixels in the first column and average over them
     first_pixel_position = []
@@ -43,7 +44,7 @@ def lazy_extraction(image_bin):
 
 ### Strengths: Fast, allows partial account to be taken of noise in the signal, low peak crushing
 ### Weakness: Also extracts pixels that are not part of the signal
-def full_extraction(image_bin):
+def full_extraction(image_bin: np.ndarray) -> np.ndarray:
     # We look at all the columns in the image and average the position of the lit pixels
     extraction = np.array([sum(i for i, valeur in enumerate(ligne) if valeur == 255) / (ligne.count(255)+0.01) for ligne in image_bin.T.tolist()])
     return extraction
@@ -52,7 +53,7 @@ def full_extraction(image_bin):
 
 ### Strength: Extracts only the signal, even if the labels are present.
 ### Weakness: Slower than other methods
-def fragmented_extraction(image_bin):
+def fragmented_extraction(image_bin: np.ndarray) -> list[float]:
     # Look at all the columns in the image and store the lit pixels. 
     # if there's a gap between two lit pixels, we store them in a new list
     signal = []

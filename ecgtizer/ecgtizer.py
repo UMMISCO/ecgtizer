@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 #Modules
 from .PDF2XML import convert_PDF2image, check_noise_type, text_extraction, tracks_extraction, clean_tracks, sup_holes, lead_extraction, lead_cutting
 from .PDF2XML_mod import plot_function, write_xml, plot_overlay
 from .completion import completion_
 import cv2
 import logging
+from typing import Callable
 
 import numpy as np
 import time
@@ -21,7 +24,7 @@ class ECGtizer:
 
     """
 
-    def __init__(self, file, dpi, Callback = None, extraction_method = "full",typ = "", verbose = False, DEBUG = False):
+    def __init__(self, file: str, dpi: int, Callback: Callable | None = None, extraction_method: str = "full", typ: str = "", verbose: bool = False, DEBUG: bool = False) -> None:
         ### Variables ###
         self.file = file
         self.typ  = typ
@@ -240,21 +243,21 @@ class ECGtizer:
 
     ### Plot the signal Extracted ###
 
-    def plot(self,lead = "",  begin = 0, end = 'inf', c = None, save = False, transparent = False, completion = False):
+    def plot(self, lead: str = "", begin: int = 0, end: str | int = 'inf', c: str | None = None, save: str | bool = False, transparent: bool = False, completion: bool = False) -> None:
         if not completion:
             plot_function(lead_all = self.extracted_lead, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
         else:
             plot_function(lead_all = self.extracted_lead_comp, lead = lead, b = begin, e = end, c = c , save = save, transparent=transparent)
 
-    def plot_over(self):
+    def plot_over(self) -> None:
         plot_overlay(lead = self.dic_tracks_ex_not_scale, image = self.image, piqueh = self.varianceh, piquev = self.variancev)
 
     ### Save the ecg on xml ###
-    def save_xml (self, save, num_version = '0.0', date_version = "17.O4.2023"):
+    def save_xml(self, save: str, num_version: str = '0.0', date_version: str = "17.O4.2023") -> None:
         write_xml(matrix = self.extracted_lead, path_out = save, TYPE = self.TYPE, table = self.table_parameters,
                   num_version = num_version, date_version  = date_version)
 
-    def completion(self, path_model, device):
+    def completion(self, path_model: str, device: str) -> None:
         self.extracted_lead_comp = completion_(ecg = self.extracted_lead, path_model = path_model, device = device)
 
 
