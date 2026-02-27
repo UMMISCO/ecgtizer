@@ -27,7 +27,16 @@
 - [x] Set up CI/CD (GitHub Actions)
 - [x] Add pre-commit hooks (black, flake8, mypy)
 - [x] Add LICENSE file
-- [ ] Generate API docs with Sphinx
+- [x] Generate API docs with Sphinx
+
+## Phase 5 — Documentation (P4)
+- [x] Rewrite README.md with architecture diagram, usage examples, format tables
+- [x] Add module-level docstrings to all 9 modules + `__all__` in `__init__.py`
+- [x] Add NumPy-style docstrings to core modules (ecgtizer.py, PDF2XML_mod.py, anonymisation.py)
+- [x] Add NumPy-style docstrings to analyses.py, completion.py, extraction_functions.py
+- [x] Add NumPy-style docstrings to XML2PDF.py (fix stale module docstring)
+- [x] Set up Sphinx documentation framework (docs/ directory, conf.py, 8 API RST pages)
+- [x] Add `[docs]` optional dependency group to pyproject.toml
 
 ---
 
@@ -53,3 +62,4 @@
 | 2026-02-27 | fix/foundation-cleanup | Phase 2 (6/6): PDF2XML_mod.py variable naming cleanup |
 | 2026-02-27 | fix/foundation-cleanup | Phase 3 complete: magic number constants, NumPy vectorization (5 loops), type hints on all public APIs, refactored monolithic functions |
 | 2026-02-27 | fix/foundation-cleanup | Phase 4 (4/5): pyproject.toml, GitHub Actions CI, pre-commit hooks, LICENSE file |
+| 2026-02-27 | fix/foundation-cleanup | Phase 4 (5/5) + Phase 5 complete: Sphinx docs, README rewrite, NumPy-style docstrings on all 72 public symbols |
