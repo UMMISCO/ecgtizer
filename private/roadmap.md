@@ -1,25 +1,26 @@
 # ECGtizer Improvement Roadmap
 
 ## Phase 1 — Foundation (P0 fixes)
-- [ ] Add proper `.gitignore`
-- [ ] Fix deprecated `cElementTree` → `ElementTree` in `PDF2XML_mod.py`
-- [ ] Fix dependency list in `setup.py` (add torch, remove mxnet, add missing deps)
-- [ ] Fix Python version conflict (env file vs numpy requirements)
-- [ ] Fix broken import in `Generate_Database.py`
+- [x] Add proper `.gitignore` + untrack `.DS_Store`
+- [x] Fix deprecated `cElementTree` → `ElementTree` in `PDF2XML_mod.py`
+- [x] Fix dependency list in `setup.py` (add torch, opencv, matplotlib, etc.; remove mxnet, wurlitzer)
+- [x] Fix Python version conflict (bump to 3.9+, remove pytesseract, remove hardcoded prefix)
+- [x] Fix broken import + syntax error in `Generate_Database.py`
+- [x] Add comprehensive test suite (137 tests: unit + integration)
 
 ## Phase 2 — Code Quality (P1)
 - [ ] Replace `print()` with `logging` module across codebase
 - [ ] Remove dead code (commented Pytesseract, unused imports)
-- [ ] Fix bare except clauses
-- [ ] Fix wildcard imports
-- [ ] Fix boolean comparison anti-patterns
-- [ ] Add basic unit tests for extraction functions
+- [ ] Fix bare except clauses in `helper_functions.py`
+- [ ] Fix wildcard import in `PDF2XML.py`
+- [ ] Fix boolean comparison anti-patterns (`== True`, `!= False`)
+- [ ] Clean up `PDF2XML_mod.py` inconsistent variable naming
 
 ## Phase 3 — Performance & Style (P2)
 - [ ] Extract magic numbers into named constants
-- [ ] Vectorize pixel-level loops with NumPy
+- [ ] Vectorize pixel-level loops with NumPy in `PDF2XML.py`
 - [ ] Add type hints to public APIs
-- [ ] Refactor monolithic functions in `PDF2XML.py`
+- [ ] Refactor monolithic functions in `PDF2XML.py` (text_extraction, tracks_extraction)
 
 ## Phase 4 — Best Practices (P3)
 - [ ] Migrate to `pyproject.toml`
@@ -30,7 +31,21 @@
 
 ---
 
+## Test Coverage Summary
+| Module | Unit Tests | Integration Tests | Total |
+|--------|-----------|-------------------|-------|
+| extraction_functions.py | 19 | 2 | 21 |
+| PDF2XML.py | 14 | - | 14 |
+| PDF2XML_mod.py | 18 | 4 | 22 |
+| completion.py | 22 | 6 | 28 |
+| analyses.py | 18 | 1 | 19 |
+| XML2PDF.py | 17 | 5 | 22 |
+| Integration (e2e) | - | 11 | 11 |
+| **Total** | **108** | **29** | **137** |
+
+---
+
 ## Progress Log
 | Date | Branch | What was done |
 |------|--------|---------------|
-| | | |
+| 2026-02-27 | fix/foundation-cleanup | Phase 1 complete: .gitignore, cElementTree fix, setup.py deps, Python 3.9+ bump, Generate_Database fix, 137 tests added |
