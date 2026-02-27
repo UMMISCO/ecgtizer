@@ -514,7 +514,8 @@ def Write_PDF(ecg: dict[str, np.ndarray], path_output: str, type_of_pdf: str, le
         Full lead-II continuous signal for the rhythm strip (type1 only).
     """
     initial_dir = os.getcwd()
-    path_output = initial_dir + '/' + path_output
+    if not os.path.isabs(path_output):
+        path_output = initial_dir + '/' + path_output
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(current_dir)
