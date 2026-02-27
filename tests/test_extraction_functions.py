@@ -123,6 +123,31 @@ class TestFragmentedExtraction:
         result = fragmented_extraction(img)
         assert len(result) == 20
 
+    def test_no_nan_on_empty_columns(self):
+        """Columns with no lit pixels must not produce NaN values."""
+        h, w = 100, 50
+        img = np.zeros((h, w), dtype=np.uint8)
+        # Draw signal only on even columns, leave odd columns empty
+        for x in range(0, w, 2):
+            img[50, x] = 255
+        result = fragmented_extraction(img)
+        assert len(result) == w
+        assert not any(np.isnan(v) for v in result)
+
+    def test_no_nan_on_sparse_image(self):
+        """Realistic sparse image with many empty columns produces no NaN."""
+        h, w = 200, 500
+        img = np.zeros((h, w), dtype=np.uint8)
+        # Draw a thin sine wave with gaps
+        for x in range(w):
+            if x % 3 == 0:  # skip every 3rd column
+                continue
+            y = int(h / 2 + 30 * np.sin(2 * np.pi * x / 200))
+            img[y, x] = 255
+        result = fragmented_extraction(img)
+        assert len(result) == w
+        assert not any(np.isnan(v) for v in result)
+
     def test_single_group_per_column(self):
         """With a single contiguous group, should average it correctly."""
         h, w = 100, 10

@@ -585,38 +585,47 @@ def sup_holes(signal: list | np.ndarray, TYPE: str) -> np.ndarray:
     """
     
     # if the signal is constant then we set the signal to 0
-    if np.all(np.diff(signal) == 0):
-        signal = np.zeros(len(signal)) # Else the signal is set to 0
-        return(signal)
-    
-    end = -1
-    # If the first value is a hole then we will search for the following point 
-    # that is a point of signal and we will take its value
-    if signal[0] == 0: 
-        j = 1
-        while signal[j] == 0:
-            j+=1
-        signal[0] = signal[j]
-     
-    # If the last point are hole we do the same as before we search the closer point 
-    # that is a point of the signal
-    if signal[-1] == 0:
-        j = 1
-        while signal[-j] == 0:
-            j += 1
-        signal[-1] = signal[-j]
-
-    # Interpolate interior holes (zeros) using nearest non-zero neighbours
     signal = np.asarray(signal, dtype=float)
-    zero_mask = signal == 0
-    if np.any(zero_mask):
-        nonzero_idx = np.where(~zero_mask)[0]
-        if len(nonzero_idx) > 0:
-            signal[zero_mask] = np.interp(
-                np.where(zero_mask)[0], nonzero_idx, signal[nonzero_idx]
-            )     
-            
-    return(signal[:end])
+    if np.all(np.diff(signal) == 0):
+        signal = np.zeros(len(signal))
+        return signal
+
+    end = -1
+    # Treat both zeros and NaN as holes to interpolate
+    hole_mask = (signal == 0) | np.isnan(signal)
+
+    # If the first value is a hole, find the next valid point
+    if hole_mask[0]:
+        j = 1
+        while j < len(signal) and hole_mask[j]:
+            j += 1
+        if j < len(signal):
+            signal[0] = signal[j]
+        else:
+            signal[0] = len(signal) / 2  # fallback to midpoint
+
+    # If the last value is a hole, find the previous valid point
+    if hole_mask[-1]:
+        j = 1
+        while j < len(signal) and hole_mask[-j]:
+            j += 1
+        if j < len(signal):
+            signal[-1] = signal[-j]
+        else:
+            signal[-1] = signal[0]
+
+    # Recompute mask after fixing endpoints
+    hole_mask = (signal == 0) | np.isnan(signal)
+
+    # Interpolate interior holes using nearest valid neighbours
+    if np.any(hole_mask):
+        valid_idx = np.where(~hole_mask)[0]
+        if len(valid_idx) > 0:
+            signal[hole_mask] = np.interp(
+                np.where(hole_mask)[0], valid_idx, signal[valid_idx]
+            )
+
+    return signal[:end]
 
 
 def lead_extraction(dic_tracks: dict[int, np.ndarray], extraction_method: str, TYPE: str, NOISE: bool | float, DEBUG: bool = False) -> dict[str, np.ndarray]:
@@ -802,7 +811,7 @@ def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT:
 
                 # extract each lead from the tracks
                 elif LEAD_LENGTH != 0 :
-                    while length < len(dic_tracks[1]):
+                    while length < len(dic_tracks[t]):
                         try :
                             dic_leads[dic_association[t][it]] = (((pixel_zero - dic_tracks[t][length : length + LEAD_LENGTH]) / f) * AMPLITUDE_SCALE_UV) # We fill the leads dictionnary with the name of the lead and the image of it
                             length += int(len(dic_tracks[t][ LENGTH_PULSE:  ]) / LEAD_NUMBER)
@@ -841,10 +850,19 @@ def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT:
         try:
             for k in dic_leads:
                 zero_vector = np.zeros(SIGNAL_LENGTH_STANDARD)
-                zero_vector[dic_time[k][0]:dic_time[k][1]] = dic_leads[k]
+                lead_data = dic_leads[k]
+                t_start, t_end = dic_time[k]
+                expected_len = t_end - t_start
+                if len(lead_data) > expected_len:
+                    lead_data = lead_data[:expected_len]
+                elif len(lead_data) < expected_len:
+                    padded = np.zeros(expected_len)
+                    padded[:len(lead_data)] = lead_data
+                    lead_data = padded
+                zero_vector[t_start:t_end] = lead_data
                 dic_leads[k] = zero_vector
         except Exception as e:
-            pass
+            logger.warning("Lead placement failed: %s", e)
         return(dic_leads)
     
     # If the format is not classic

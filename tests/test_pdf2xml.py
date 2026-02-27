@@ -80,6 +80,28 @@ class TestSupHoles:
         # Holes should be filled
         assert all(result[100:110] != 0)
 
+    def test_nan_values_are_filled(self):
+        """NaN values should be treated as holes and interpolated."""
+        signal = np.array([10.0, np.nan, np.nan, 40.0, 50.0])
+        result = sup_holes(signal, 'classic')
+        assert not np.any(np.isnan(result))
+        # Interpolated values should be between neighbours
+        assert 10.0 < result[1] < 40.0
+        assert 10.0 < result[2] < 40.0
+
+    def test_nan_at_boundaries(self):
+        """NaN at start and end should be filled from nearest valid values."""
+        signal = np.array([np.nan, np.nan, 30.0, 40.0, np.nan])
+        result = sup_holes(signal, 'classic')
+        assert not np.any(np.isnan(result))
+
+    def test_mixed_nan_and_zeros(self):
+        """Both NaN and zero holes should be filled."""
+        signal = np.array([10.0, 0.0, np.nan, 40.0, 0.0, 60.0])
+        result = sup_holes(signal, 'classic')
+        assert not np.any(np.isnan(result))
+        assert all(v != 0 for v in result)
+
 
 class TestLeadExtraction:
 

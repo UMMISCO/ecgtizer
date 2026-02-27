@@ -104,39 +104,31 @@ def fragmented_extraction(image_bin: np.ndarray) -> list[float]:
     list[float]
         Mean vertical positions per column (from the signal fragment).
     """
-    # Look at all the columns in the image and store the lit pixels. 
+    # Look at all the columns in the image and store the lit pixels.
     # if there's a gap between two lit pixels, we store them in a new list
+    midpoint = len(image_bin) / 2
     signal = []
     for i in range(len(image_bin[0])):
-        matrix = []
-        sub_list = []
-        begin = 0
         positions = np.where(image_bin[:,i] == 255)[0]
+        # No lit pixels in this column — use previous value or midpoint
         if len(positions) == 0:
-            it = 0
-        else:
-            it = positions[0]
-        for j in (positions):
-            if it == j:
-                sub_list.append(j)
-                it+=1
-            elif it != j:
-                matrix.append(sub_list)
-                sub_list = []
-                sub_list.append(j)
-                it = j+1
-        matrix.append(sub_list)
-        # If there are several lists for a column, that means there are several groups of pixels.
-        # The first group of pixels are always the letters and the last group is supposed to correspond to our signal.
-        try:
-            if len(matrix) > 1:
-                signal.append(np.mean(matrix[-1]))
-            elif len(matrix) == 1:
-                signal.append(np.mean(matrix[0]))
+            signal.append(signal[-1] if signal else midpoint)
+            continue
+        # Group consecutive lit pixels into fragments
+        matrix = []
+        sub_list = [positions[0]]
+        for j in range(1, len(positions)):
+            if positions[j] == positions[j - 1] + 1:
+                sub_list.append(positions[j])
             else:
-                signal.append(signal[-1])
-        except Exception as e:
-            signal.append(len(image_bin)/2)
+                matrix.append(sub_list)
+                sub_list = [positions[j]]
+        matrix.append(sub_list)
+        # The last fragment is assumed to be the signal (first fragments are text labels)
+        if len(matrix) > 1:
+            signal.append(np.mean(matrix[-1]))
+        else:
+            signal.append(np.mean(matrix[0]))
     return signal
 
 
