@@ -47,8 +47,8 @@ print()
 
 
 import sys
-if sys.version_info < (3,6):
-    sys.exit('Sorry, Python < 3.6 is not supported')
+if sys.version_info < (3,9):
+    sys.exit('Sorry, Python < 3.9 is not supported')
 
 from setuptools import setup
 from setuptools.extension import Extension
@@ -259,7 +259,7 @@ setup(
                    "Programming Language :: Cython",
                    "Programming Language :: Python",
                    "Programming Language :: Python :: 3",
-                   "Programming Language :: Python :: 3.8",
+                   "Programming Language :: Python :: 3.9",
                    "Topic :: Scientific/Engineering",
                    "Topic :: Scientific/Engineering :: Mathematics",
                    "Topic :: Scientific/Engineering :: Artificial Intelligence",
