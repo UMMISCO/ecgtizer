@@ -45,6 +45,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-cov",
     "black",
     "flake8",
     "mypy",
@@ -64,7 +65,20 @@ ecgtizer = ["*.pxd"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=ecgtizer --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["ecgtizer"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if DEBUG:",
+    "if __name__",
+    "plt\\.show",
+    "plt\\.figure",
+]
 
 [tool.black]
 line-length = 120
