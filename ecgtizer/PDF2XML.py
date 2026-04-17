@@ -99,8 +99,9 @@ def _calibrate_from_binary(track_bin: np.ndarray, DPI: int = 0) -> tuple[float, 
 
     Examines the first 15 % of the track width (the reference pulse region)
     and finds columns where the lit-pixel span is significantly larger than
-    the median trace thickness.  The vertical span of those columns gives
-    the true calibration height in pixels.
+    the median trace thickness.  Uses a two-stage detection: first finds the
+    maximum span (the vertical edges of the calibration square), then selects
+    only columns near that maximum to compute the calibration height.
 
     Returns (pixel_zero, factor).  ``pixel_zero`` is the baseline row
     (bottom of the square) and ``factor`` is the square height in pixels,
@@ -128,18 +129,32 @@ def _calibrate_from_binary(track_bin: np.ndarray, DPI: int = 0) -> tuple[float, 
         pixel_zero = float(h / 2)
         return pixel_zero, f
 
+    max_span = float(np.max(spans))
     median_span = float(np.median(spans[valid]))
-    # Square columns have span at least 3× the median trace thickness
+
+    # Two-stage detection:
+    # 1) The max span represents the vertical edge of the calibration square.
+    #    If it's much larger than the median trace (> 5×) and plausible
+    #    (< 50% of track height — the square is ~10mm on ~50mm tracks),
+    #    use columns near that maximum (> 50% of max_span) as the true
+    #    square columns.
+    # 2) Fall back to the original 3× median threshold otherwise.
+    if max_span > median_span * 5 and max_span > 10 and max_span < h * 0.5:
+        edge_mask = spans > max_span * 0.5
+        if np.sum(edge_mask) >= 2:
+            f = float(np.median(spans[edge_mask]))
+            pixel_zero = float(np.median(baselines[edge_mask]))
+            if f >= 1:
+                return pixel_zero, f
+
+    # Fallback: original threshold-based detection
     square_mask = spans > max(median_span * 3, 10)
     if np.sum(square_mask) < 3:
-        # No clear square detected — DPI fallback
         f = (10 * DPI) / 25.4 if DPI > 0 else 1.0
         pixel_zero = float(np.median(baselines[valid]))
         return pixel_zero, f
 
-    # The calibration factor is the median span in the square columns
     f = float(np.median(spans[square_mask]))
-    # The baseline (pixel_zero) is the bottom of the square = bottom of trace
     pixel_zero = float(np.median(baselines[square_mask]))
 
     if f < 1:
@@ -355,33 +370,76 @@ def text_extraction(image: np.ndarray, page: int, DPI: int, NOISE: bool | float,
             # The mask must have the same color as the rest of the image
             image[y:y + h, x:x + w] = np.mean(image[y:y + h, x:x + w])
         
-    # If the image is not noised we apply a Otsu detection threshold    
+    # If the image is not noised we apply a Otsu detection threshold
     else:
         # Binarize the image with the Otsu threshold
-        ret,image_bin = cv2.threshold(image_blur,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU) 
-        # Define the rectangle original size
+        ret,image_bin = cv2.threshold(image_blur,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+        img_h, img_w = image.shape[:2]
+
+        # ── Pass 1: Contour-based removal of medium text blocks ──
         if TYPE == "apple":
-            rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(0.03*len(image)),int(0.03*len(image))))
+            k_size = int(0.03 * img_h)
         else:
-            rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(0.0075*len(image)),int(0.0075*len(image))))
-        # Dilate the image
+            k_size = max(int(0.0075 * img_h), 8)
+        rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k_size, k_size))
         dilation = cv2.dilate(image_bin, rect_kernel, iterations = 1)
-        # Find contour by applying rectangle
         contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    
+
         im2 = image.copy()
-        
-        # For all the rectangles with a certain size mask them
-        for cnt in contours: 
-            x, y, w, h = cv2.boundingRect(cnt) 
-            if len(image) < len(image[0]): 
-                if w-x < len(im2)/3:
-                    rect = cv2.rectangle(im2, (x, y), (x + w, y + h), (255, 0, 0), 2) 
+
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            area_ratio = (w * h) / (img_w * img_h)
+            if area_ratio > 0.25:
+                continue
+            if img_w > img_h:  # landscape
+                if w < img_w / 3:
+                    rect = cv2.rectangle(im2, (x, y), (x + w, y + h), (255, 0, 0), 2)
                     image[y:y + h, x:x + w] = (255,255,255)
-            else:
-                if h-y < len(im2[0])/4:
-                    rect = cv2.rectangle(im2, (x, y), (x + w, y + h), (255, 0, 0), 2) 
+            else:  # portrait
+                if h < img_h / 4:
+                    rect = cv2.rectangle(im2, (x, y), (x + w, y + h), (255, 0, 0), 2)
                     image[y:y + h, x:x + w] = np.mean(image[y:y + h, x:x + w])
+
+        # ── Passes 2 & 3 apply only to low-res images (photos). ──
+        # High-res PDFs have clean contours and don't need aggressive
+        # character-level removal — Pass 1 is sufficient for them.
+        # Threshold: ~2 megapixels separates photos from 500-DPI PDFs.
+        is_lowres = (img_h * img_w) < 2_000_000
+
+        if is_lowres:
+            # ── Pass 2: Zone-based header / footer removal ──
+            # In standard ECG printouts, text lives above the first
+            # track and below the last track.  Use the horizontal
+            # projection of the binary image to find the signal band
+            # and blank everything outside it.
+            row_proj = np.sum(image_bin, axis=1).astype(float)
+            from scipy.ndimage import uniform_filter1d
+            row_proj_smooth = uniform_filter1d(
+                row_proj, size=max(img_h // 40, 5))
+            proj_thresh = row_proj_smooth.max() * 0.05
+            active_rows = np.where(row_proj_smooth > proj_thresh)[0]
+
+            if len(active_rows) > 2:
+                first_active = int(active_rows[0])
+                last_active = int(active_rows[-1])
+                # Header: blank above first active row
+                header_end = max(
+                    0, first_active - max(int(img_h * 0.005), 2))
+                if header_end > int(img_h * 0.02):
+                    image[:header_end, :] = (255, 255, 255) if image.ndim == 3 else 255
+                # Footer: blank below last active row
+                footer_start = min(
+                    img_h, last_active + max(int(img_h * 0.005), 2))
+                if (img_h - footer_start) > int(img_h * 0.02):
+                    image[footer_start:, :] = (255, 255, 255) if image.ndim == 3 else 255
+
+            # NOTE: A character-level pass (connected-component or
+            # morphological) was tested here but removed — it
+            # reliably destroys calibration squares on photos because
+            # those squares are similar in size/shape to text blobs.
+            # Lead labels within the signal area remain; they are
+            # handled as noise during waveform extraction.
         
     # Plot the image with the detected rectangles
     if DEBUG:
@@ -866,15 +924,16 @@ def lead_cutting(dic_tracks: dict[int, np.ndarray], DPI: int, TYPE: str, FORMAT:
                     _p1 = float(min(_ref))
                     _f = _pz - _p1
                 _calib[t] = (_pz, max(_f, 0.001), _lp)
-            # Cross-validate: replace outlier f values with the max
+            # Cross-validate: replace outlier f values using median-based detection.
+            # A track whose f deviates more than 2× from the median is replaced.
             if len(_calib) > 1:
                 all_f = [v[1] for v in _calib.values()]
-                best_f = max(all_f)
+                median_f = float(np.median(all_f))
                 for t in _calib:
                     pz, f_val, lp = _calib[t]
-                    if f_val < 0.5 * best_f:
-                        logger.info("Track %d: calibration f=%.1f replaced by %.1f", t, f_val, best_f)
-                        _calib[t] = (pz, best_f, lp)
+                    if f_val < 0.5 * median_f or f_val > 2.0 * median_f:
+                        logger.info("Track %d: calibration f=%.1f replaced by median %.1f", t, f_val, median_f)
+                        _calib[t] = (pz, median_f, lp)
 
         # Plot each tracks
         for t in dic_tracks:

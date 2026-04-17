@@ -640,7 +640,7 @@ def xml_to_pdf(path_input: str, path_output: str, type_of_pdf: str = 'type1') ->
     # For type1 (3x4), the rhythm strip needs the full lead II signal
     lead_IIc = ""
     if type_of_pdf == "type1":
-        for k in ("II", "IIc"):
+        for k in ("IIc", "II"):
             if k in ecg:
                 lead_IIc = ecg[k]
                 break

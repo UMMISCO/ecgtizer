@@ -268,8 +268,10 @@ def scatter_plot(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.n
                 
                 plt.plot(x_values, y_values, color='#fde725')
                 
-                plt.text(l1.min(), l2.max(),f'r : {pente:.2f}', fontsize=12, weight = 'bold')
-                plt.title ('Scatter Plot for lead ' + l)
+                from scipy.stats import pearsonr as _pearsonr
+                _r, _ = _pearsonr(l1, l2)
+                plt.text(l1.min(), l2.max(), f'r={_r:.2f}  slope={pente:.2f}', fontsize=11, weight='bold')
+                plt.title('Scatter Plot for lead ' + l)
                 plt.xlabel('Extracted lead')
                 plt.ylabel('True lead')
                 if save:
@@ -289,8 +291,10 @@ def scatter_plot(file1: str | dict[str, np.ndarray], file2: str | dict[str, np.n
         y_values = intercept + pente * x_values
 
         plt.plot(x_values, y_values, color='#fde725')
-        plt.text(l1.min(), l2.max(),f'r : {pente:.2f}', fontsize=12, weight = 'bold')
-        plt.title ('Scatter Plot for lead ' + lead)
+        from scipy.stats import pearsonr as _pearsonr
+        _r, _ = _pearsonr(l1, l2)
+        plt.text(l1.min(), l2.max(), f'r={_r:.2f}  slope={pente:.2f}', fontsize=11, weight='bold')
+        plt.title('Scatter Plot for lead ' + lead)
         plt.scatter(l1, l2, color = '#440154', s = 3)
         plt.xlabel('Extracted lead')
         plt.ylabel('True lead')
