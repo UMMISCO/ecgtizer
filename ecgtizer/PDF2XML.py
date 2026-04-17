@@ -45,6 +45,10 @@ WAVEFORM_VARIANCE_MIN = 200   # Min vertical variance to detect signal presence
 # --- Pixel values ---
 WHITE_PIXEL = 255
 
+# --- PDF rasterization safety caps (decompression-bomb defense) ---
+MAX_PDF_PAGES = 5             # ECG printouts are single-page; allow margin
+MAX_DPI = 1200                # 2.4x typical 500 DPI; refuse pathological values
+
 # --- Lead timing boundaries (samples) ---
 LEAD_TIME_3X4 = {
     'I': (0, 1250), 'II': (0, 1250), 'III': (0, 1250),
@@ -202,9 +206,11 @@ def convert_PDF2image(path_input: str, DPI: int) -> np.ndarray:
     int  : number of pages
     bool : True: The conversion has worked / False :  The conversion has not worked
     """
+    if DPI > MAX_DPI:
+        logger.error("DPI %d exceeds MAX_DPI=%d; refusing to rasterize.", DPI, MAX_DPI)
+        return ("_", "_", False)
     try:
-        # Convert all the pages of the pdf into PIL
-        pages = convert_from_path(path_input, poppler_path= '', dpi = DPI) 
+        pages = convert_from_path(path_input, dpi=DPI, first_page=1, last_page=MAX_PDF_PAGES)
     except exceptions.PDFPageCountError:
         logger.error("Impossible conversion. The input file is not a PDF.")
         return("_", "_", False)
