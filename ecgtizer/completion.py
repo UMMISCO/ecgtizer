@@ -365,7 +365,7 @@ def load_model(path: str, device: str) -> Autoencoder_net:
         Model in evaluation mode.
     """
     model = Autoencoder_net(device)
-    model.load_state_dict(torch.load(path, map_location=torch.device(device)))
+    model.load_state_dict(torch.load(path, map_location=torch.device(device), weights_only=True))
     model.eval()
     return model
 
