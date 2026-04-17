@@ -29,6 +29,35 @@
 - [x] Add LICENSE file
 - [x] Generate API docs with Sphinx
 
+## Phase 6 — Security Hardening (P0/P1) — 2026-04-17
+
+Findings from full codebase security audit. Issues filed on UMMISCO/ecgtizer.
+
+### Critical
+- [ ] **C1** (#5) — `torch.load` without `weights_only=True` allows arbitrary code exec via malicious `.pth` (`ecgtizer/completion.py:368`)
+- [ ] **C2** (#6) — `pickle.load` on vendored `translation.pkl` / `styles.pkl` (`Create_database/ecg_image_generator/HandwrittenText/generate.py:182,207`)
+- [ ] **C3** (#7) — `requests==2.21.0` → bump `>=2.32.3` (CVE-2023-32681, CVE-2024-35195)
+- [ ] **C4** (#8) — `tensorflow==2.14.0` + `keras==2.14.0` → bump `tensorflow>=2.18`, `keras>=3.8` (CVE-2025-1550 Keras Lambda RCE)
+
+### High
+- [ ] **H1** (#9) — XML parsing without `defusedxml` (billion-laughs DoS) — `XML2PDF.py:71`, `analyses.py:61`, `PDF2XML_mod.py`
+- [ ] **H2-H7** (#10) — Bump scikit-learn, validators, opencv-python, scipy, spacy; migrate off imgaug
+
+### Medium
+- [ ] **M1** (#11) — `anonymisation.py:89` only masks top-left 200×200 region; misses footer/margin patient IDs. **Does not meet HIPAA/GDPR.** Needs OCR-based masking + audit log + lossless output
+- [ ] **M2** (#12) — `convert_from_path` in `PDF2XML.py:207` has no page/DPI/`MAX_IMAGE_PIXELS` cap → PDF decompression bomb risk
+- [ ] **M3** (#13) — SSRF in `HandwrittenText/generate.py:150`: `requests.get(link)` no timeout, no host allowlist, redirects on
+
+### Low
+- [ ] **L1** (#14) — Pin `Pillow>=12.2.0` in `pyproject.toml` (already done in generator's requirements.txt for CVE-2026-40192)
+
+### Already verified clean
+- No `eval`/`exec`/`shell=True`/hardcoded secrets/SQL/`tempfile.mktemp`
+- `yaml.safe_load` correctly used in `helper_functions.py:22`
+- `re` usage in `ecgtizer/` clean (no ReDoS)
+
+---
+
 ## Phase 5 — Documentation (P4)
 - [x] Rewrite README.md with architecture diagram, usage examples, format tables
 - [x] Add module-level docstrings to all 9 modules + `__all__` in `__init__.py`
