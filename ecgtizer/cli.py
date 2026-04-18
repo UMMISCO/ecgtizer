@@ -6,6 +6,7 @@ Usage
     ecgtizer input.pdf 500 fragmented output.xml --verbose
     ecgtizer input.png 300 full output.xml --type kardia
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,9 +30,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Extraction algorithm: lazy, full, or fragmented.",
     )
     parser.add_argument("output", help="Path for the output XML file.")
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Print progress information."
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Print progress information.")
     parser.add_argument(
         "--type", "-t", dest="typ", default="", help="Force ECG format (classic, kardia, wellue, apple)."
     )

@@ -6,10 +6,12 @@ Three strategies with different speed/accuracy trade-offs:
 * **full** -- fast, high fidelity, but may include annotation artifacts.
 * **fragmented** -- slower, highest fidelity via contour detection.
 """
+
 from __future__ import annotations
 
 import numpy as np
 import cv2
+
 
 def lazy_extraction(image_bin: np.ndarray) -> list[int]:
     """Extract a waveform by following the nearest lit pixel from an anchor.
@@ -37,22 +39,22 @@ def lazy_extraction(image_bin: np.ndarray) -> list[int]:
     signal = [anchor]
 
     # We then go through the image column by column, looking for the lit pixel closest to the anchor pixel.
-    for i in range(1,len(image_bin[0])):
+    for i in range(1, len(image_bin[0])):
         # If we can stay at the same level as the anchor pixel, we do so
-        if image_bin[anchor,i] == 255:
+        if image_bin[anchor, i] == 255:
             signal.append(anchor)
         else:
             # Otherwise we look for the nearest lit pixel at the top and bottom, and as soon as we find one we stop and store it.
             # We search within a window of 1000 pixels to avoid searching too far.
             try:
                 for j in range(1000):
-                    if image_bin[anchor+j,i] == 255:
-                        signal.append(anchor+j)
-                        anchor = anchor+j
+                    if image_bin[anchor + j, i] == 255:
+                        signal.append(anchor + j)
+                        anchor = anchor + j
                         break
-                    elif image_bin[anchor-j,i] == 255:
-                        signal.append(anchor-j)
-                        anchor = anchor-j
+                    elif image_bin[anchor - j, i] == 255:
+                        signal.append(anchor - j)
+                        anchor = anchor - j
                         break
             except IndexError:
                 signal.append(anchor)
@@ -80,12 +82,11 @@ def full_extraction(image_bin: np.ndarray) -> np.ndarray:
     mask = image_bin == 255
     row_indices = np.arange(image_bin.shape[0], dtype=float)
     # Weighted sum of row indices where mask is True, per column
-    weighted_sum = np.dot(row_indices, mask)           # shape: (width,)
-    count = mask.sum(axis=0).astype(float)             # shape: (width,)
+    weighted_sum = np.dot(row_indices, mask)  # shape: (width,)
+    count = mask.sum(axis=0).astype(float)  # shape: (width,)
     # Avoid division by zero: where no lit pixels, return 0.0
     extraction = np.divide(weighted_sum, count, out=np.zeros(image_bin.shape[1]), where=count > 0)
     return extraction
-
 
 
 def fragmented_extraction(image_bin: np.ndarray) -> list[float]:
@@ -125,8 +126,5 @@ def fragmented_extraction(image_bin: np.ndarray) -> list[float]:
             signal[i] = np.mean(positions)
         else:
             # Last fragment is the signal (first fragments are text labels)
-            signal[i] = np.mean(positions[breaks[-1]:])
+            signal[i] = np.mean(positions[breaks[-1] :])
     return signal.tolist()
-
-
-
