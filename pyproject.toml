@@ -53,6 +53,7 @@ Issues = "https://github.com/your-org/ecgtizer/issues"
 dev = [
     "pytest>=7.0",
     "pytest-cov",
+    "pandas",
     "black",
     "flake8",
     "mypy",
