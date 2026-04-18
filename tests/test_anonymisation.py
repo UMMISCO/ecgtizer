@@ -6,10 +6,17 @@ Tests the PDF anonymization utilities:
 """
 import numpy as np
 import os
+import sys
 import pytest
 from unittest.mock import patch, MagicMock
 
 from ecgtizer.anonymisation import array_to_pdf, anonymisation
+
+# `ecgtizer/__init__.py` re-exports the `anonymisation` function, which
+# shadows the `ecgtizer.anonymisation` submodule on attribute lookup in
+# some Python/pytest-cov combinations. Resolve through sys.modules to
+# patch the module reliably.
+_anon_module = sys.modules["ecgtizer.anonymisation"]
 
 
 class TestArrayToPdf:
@@ -59,7 +66,7 @@ class TestAnonymisation:
         # Simulate text region (dark pixels in upper-left)
         img[20:60, 20:180] = [0, 0, 0]
 
-        with patch("ecgtizer.anonymisation.convert_PDF2image") as mock_convert:
+        with patch.object(_anon_module, "convert_PDF2image") as mock_convert:
             mock_convert.return_value = ([img], 1, True)
             outpath = os.path.join(tmp_output_dir, "anon_output.pdf")
             anonymisation("dummy.pdf", outpath)
@@ -73,7 +80,7 @@ class TestAnonymisation:
         # Dark text block in upper-left (x < 200, y < 200)
         img[30:80, 30:150] = [0, 0, 0]
 
-        with patch("ecgtizer.anonymisation.convert_PDF2image") as mock_convert:
+        with patch.object(_anon_module, "convert_PDF2image") as mock_convert:
             mock_convert.return_value = ([img], 1, True)
             outpath = os.path.join(tmp_output_dir, "anon_masked.pdf")
             anonymisation("dummy.pdf", outpath)
@@ -89,7 +96,7 @@ class TestAnonymisation:
             y = max(0, min(h - 1, y))
             img[y, x] = [0, 0, 0]
 
-        with patch("ecgtizer.anonymisation.convert_PDF2image") as mock_convert:
+        with patch.object(_anon_module, "convert_PDF2image") as mock_convert:
             mock_convert.return_value = ([img], 1, True)
             outpath = os.path.join(tmp_output_dir, "anon_traces.pdf")
             anonymisation("dummy.pdf", outpath)
@@ -100,7 +107,7 @@ class TestAnonymisation:
         h, w = 400, 600
         img = np.ones((h, w, 3), dtype=np.uint8) * 255
 
-        with patch("ecgtizer.anonymisation.convert_PDF2image") as mock_convert:
+        with patch.object(_anon_module, "convert_PDF2image") as mock_convert:
             mock_convert.return_value = ([img], 1, True)
             outpath = os.path.join(tmp_output_dir, "anon_clean.pdf")
             anonymisation("dummy.pdf", outpath)
