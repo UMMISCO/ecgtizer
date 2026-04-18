@@ -112,9 +112,6 @@ def alignement(lead1: np.ndarray, lead2: np.ndarray) -> tuple[np.ndarray, np.nda
         new_x = [i for i in np.arange(0, len(lead2), len(lead2) / MAX_ALIGNMENT_LENGTH)]
         lead2 = np.interp(new_x, x, y)
 
-    score = pearsonr(lead1, lead2[a : a + len(lead1)])[0]
-    CONTINUE = True
-
     if len(lead2) != len(lead1):
         list_pos = []
         for a in range(0, len(lead2) - len(lead1)):

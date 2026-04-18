@@ -661,20 +661,19 @@ def clean_tracks(
                 ret, image_bin = cv2.threshold(img_blur, 127, 255, cv2.THRESH_BINARY_INV)
 
             else:
-                # If the image is noised we will use the Sauvola detection thresholding
+                # For noisy images, use adaptive (local) thresholding so the
+                # decision follows local illumination instead of one global
+                # threshold. Previously this branch called skimage's
+                # threshold_sauvola without importing it — a latent NameError.
+                # cv2.adaptiveThreshold gives equivalent local-window behaviour
+                # without pulling in scikit-image.
                 if NOISE is True:
-                    # Size of the local window for the Sauvola thresholding
-                    WINDOW_SIZE = 3
-                    # Apply Sauvola Thresholding
-                    thresh_sauvola = threshold_sauvola(img_blur, window_size=WINDOW_SIZE)  # noqa: F821  # latent bug: missing skimage import, tracked separately
-
-                    # Binarize the image
-                    image_bin = img_blur < thresh_sauvola
-                    image_bin = np.where(image_bin, WHITE_PIXEL, 0).astype(np.uint8)
-
-                # If the image is not noised we will use the Otsu thresholding
+                    image_bin = cv2.adaptiveThreshold(
+                        img_blur, WHITE_PIXEL,
+                        cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,
+                        blockSize=11, C=2,
+                    )
                 else:
-                    # Apply Otsu detection thresholding
                     ret, image_bin = cv2.threshold(img_blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
             # Define the rectangle original size
             rect_kernel = cv2.getStructuringElement(
@@ -989,7 +988,7 @@ def lead_cutting(
                             it += 1
                             if DEBUG:
                                 plt.axvline(length, c="r")
-                        except Exception as e:
+                        except Exception:
                             length += int(len(dic_tracks[t][LENGTH_PULSE:]) / LEAD_NUMBER)
                 else:
                     return 0
