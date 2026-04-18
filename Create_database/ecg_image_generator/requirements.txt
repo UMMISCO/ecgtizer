@@ -1,6 +1,6 @@
+albumentations>=1.4.0
 beautifulsoup4>=4.12.3
 imageio>=2.34.0
-imgaug==0.4.0
 imutils==0.5.4
 keras>=3.8.0
 opencv_python>=4.10.0.84

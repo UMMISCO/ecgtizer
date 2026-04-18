@@ -6,8 +6,6 @@ import random
 import imageio
 import imutils
 import argparse
-import imgaug as ia
-from imgaug import augmenters as iaa
 import matplotlib.pyplot as plt
 import os, sys, argparse
 from scipy.io import savemat, loadmat
