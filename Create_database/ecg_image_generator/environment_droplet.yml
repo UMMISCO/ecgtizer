@@ -11,9 +11,9 @@ dependencies:
       - tensorflow==2.13.0
       - wfdb==3.4.1
       - keras==2.13.1
+      - albumentations>=1.4.0
       - beautifulsoup4==4.12.2
       - imageio==2.9.0
-      - imgaug==0.4.0
       - matplotlib
       - numpy==1.24.3
       - opencv_python==4.6.0.66
