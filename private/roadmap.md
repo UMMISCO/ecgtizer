@@ -34,22 +34,23 @@
 Findings from full codebase security audit. Issues filed on UMMISCO/ecgtizer.
 
 ### Critical
-- [ ] **C1** (#5) — `torch.load` without `weights_only=True` allows arbitrary code exec via malicious `.pth` (`ecgtizer/completion.py:368`)
+- [x] **C1** (#5) — `torch.load` without `weights_only=True` allows arbitrary code exec via malicious `.pth` (`ecgtizer/completion.py:368`)
 - [ ] **C2** (#6) — `pickle.load` on vendored `translation.pkl` / `styles.pkl` (`Create_database/ecg_image_generator/HandwrittenText/generate.py:182,207`)
-- [ ] **C3** (#7) — `requests==2.21.0` → bump `>=2.32.3` (CVE-2023-32681, CVE-2024-35195)
-- [ ] **C4** (#8) — `tensorflow==2.14.0` + `keras==2.14.0` → bump `tensorflow>=2.18`, `keras>=3.8` (CVE-2025-1550 Keras Lambda RCE)
+- [x] **C3** (#7) — `requests==2.21.0` → bump `>=2.32.3` (CVE-2023-32681, CVE-2024-35195)
+- [x] **C4** (#8) — `tensorflow==2.14.0` + `keras==2.14.0` → bump `tensorflow>=2.18`, `keras>=3.8` (CVE-2025-1550 Keras Lambda RCE)
 
 ### High
-- [ ] **H1** (#9) — XML parsing without `defusedxml` (billion-laughs DoS) — `XML2PDF.py:71`, `analyses.py:61`, `PDF2XML_mod.py`
-- [ ] **H2-H7** (#10) — Bump scikit-learn, validators, opencv-python, scipy, spacy; migrate off imgaug
+- [x] **H1** (#9) — XML parsing hardening via `disable_entities=True` + pin `xmltodict>=0.13`
+- [x] **H2-H6** (#10) — Bumped scikit-learn, validators, opencv-python, scipy, spacy
+- [ ] **H7** — Migrate off abandoned `imgaug` to `albumentations` (separate issue)
 
 ### Medium
 - [ ] **M1** (#11) — `anonymisation.py:89` only masks top-left 200×200 region; misses footer/margin patient IDs. **Does not meet HIPAA/GDPR.** Needs OCR-based masking + audit log + lossless output
-- [ ] **M2** (#12) — `convert_from_path` in `PDF2XML.py:207` has no page/DPI/`MAX_IMAGE_PIXELS` cap → PDF decompression bomb risk
-- [ ] **M3** (#13) — SSRF in `HandwrittenText/generate.py:150`: `requests.get(link)` no timeout, no host allowlist, redirects on
+- [x] **M2** (#12) — PDF page/DPI caps added in `PDF2XML.py` (MAX_PDF_PAGES=5, MAX_DPI=1200)
+- [x] **M3** (#13) — SSRF hardened: https-only, timeout=10, no redirects, raise_for_status
 
 ### Low
-- [ ] **L1** (#14) — Pin `Pillow>=12.2.0` in `pyproject.toml` (already done in generator's requirements.txt for CVE-2026-40192)
+- [x] **L1** (#14) — Pinned `Pillow>=12.2.0` in `pyproject.toml`
 
 ### Already verified clean
 - No `eval`/`exec`/`shell=True`/hardcoded secrets/SQL/`tempfile.mktemp`
@@ -100,3 +101,4 @@ Findings from full codebase security audit. Issues filed on UMMISCO/ecgtizer.
 | 2026-02-27 | fix/foundation-cleanup | Phase 4 (5/5) + Phase 5 complete: Sphinx docs, README rewrite, NumPy-style docstrings on all 72 public symbols |
 | 2026-02-27 | fix/foundation-cleanup | CI docs build, 17 new tests (anonymisation + XML2PDF), xml_to_pdf type1 bug fix, setup.py removal, functional docs with real examples |
 | 2026-02-27 | fix/foundation-cleanup | Pipeline vignette notebook: 12-stage visual walkthrough with real ECG data |
+| 2026-04-17 | fix/foundation-cleanup | Phase 6 security: full codebase audit, 10 GH issues filed, 8 fixed (C1, C3, C4, H1, H2-H6, M2, M3, L1); open for follow-up: C2 pickle verification (#6), H7 imgaug migration, M1 anonymisation rewrite (#11) |
