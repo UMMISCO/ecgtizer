@@ -101,4 +101,5 @@ Findings from full codebase security audit. Issues filed on UMMISCO/ecgtizer.
 | 2026-02-27 | fix/foundation-cleanup | Phase 4 (5/5) + Phase 5 complete: Sphinx docs, README rewrite, NumPy-style docstrings on all 72 public symbols |
 | 2026-02-27 | fix/foundation-cleanup | CI docs build, 17 new tests (anonymisation + XML2PDF), xml_to_pdf type1 bug fix, setup.py removal, functional docs with real examples |
 | 2026-02-27 | fix/foundation-cleanup | Pipeline vignette notebook: 12-stage visual walkthrough with real ECG data |
-| 2026-04-17 | fix/foundation-cleanup | Phase 6 security: full codebase audit, 10 GH issues filed, 8 fixed (C1, C3, C4, H1, H2-H6, M2, M3, L1); open for follow-up: C2 pickle verification (#6), H7 imgaug migration, M1 anonymisation rewrite (#11) |
+| 2026-04-17 | fix/foundation-cleanup | Phase 6 security: full codebase audit, 10 GH issues filed, 8 fixed (C1, C3, C4, H1, H2-H6, M2, M3, L1); open for follow-up: C2 pickle verification (#6), H7 imgaug migration (#15), M1 anonymisation rewrite (#11) |
+| 2026-04-18 | fix/foundation-cleanup | Bump min Python to 3.10 (Pillow 12.2.0 requirement); full suite 159 tests green on py3.12; filed upstream at alphanumericslab/ecg-image-kit (issue #22, PR #23 for SSRF fix) |
