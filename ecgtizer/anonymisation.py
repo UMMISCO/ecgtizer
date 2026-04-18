@@ -1,3 +1,10 @@
+"""ECG PDF anonymization utility.
+
+Detects and masks patient-identifying text regions in ECG PDF documents
+using morphological operations, then re-exports the cleaned image as a
+new PDF file.
+"""
+
 import sys
 
 from .PDF2XML import convert_PDF2image
@@ -13,7 +20,16 @@ from io import BytesIO
 
 
 def array_to_pdf(array, filename):
-    # Convertir le tableau NumPy en une image PIL
+    """Convert a NumPy image array to a single-page PDF file.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Image data as a NumPy array (H x W x C or H x W).
+    filename : str
+        Output PDF file path.
+    """
+    # Convert NumPy array to PIL Image
     image = Image.fromarray(array)
 
     # Redimensionner l'image pour s'adapter à la taille souhaitée
@@ -23,7 +39,7 @@ def array_to_pdf(array, filename):
 
     # Créer un flux mémoire pour stocker temporairement l'image
     image_buffer = BytesIO()
-    image.save(image_buffer, format='JPEG')
+    image.save(image_buffer, format="JPEG")
 
     # Créer un document PDF
     c = canvas.Canvas(filename, pagesize=(new_width, new_height))
@@ -35,35 +51,46 @@ def array_to_pdf(array, filename):
     # Enregistrer le document PDF
     c.save()
 
-def anonymisation(file, out):
-    dpi = 300
-    images, page_number, _ = convert_PDF2image(file, DPI = dpi)
-    image = np.array(images[0])
-    #plt.imshow(image)
-    
-    # Convert the image in gray scale 
-    img_gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    # Apply a Gaussian Blur
-    img_blur = cv2.GaussianBlur(img_gray, (5,5), 0)
 
-    ret,image_bin = cv2.threshold(img_blur,0, 255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU) 
-    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20,20))
+def anonymisation(file, out):
+    """Remove patient-identifying text from an ECG PDF.
+
+    Converts the first page to an image, detects text-like regions in the
+    upper-left corner using morphological dilation, masks them with white
+    pixels, and writes the result as a new PDF.
+
+    Parameters
+    ----------
+    file : str
+        Path to the input ECG PDF file.
+    out : str
+        Path for the anonymized output PDF.
+    """
+    dpi = 300
+    images, page_number, _ = convert_PDF2image(file, DPI=dpi)
+    image = np.array(images[0])
+    # plt.imshow(image)
+
+    # Convert the image in gray scale
+    img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Apply a Gaussian Blur
+    img_blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
+
+    ret, image_bin = cv2.threshold(img_blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
     # Dilate the image
-    dilation = cv2.dilate(image_bin, rect_kernel, iterations = 1)
+    dilation = cv2.dilate(image_bin, rect_kernel, iterations=1)
     # Find contour by applying rectangle
     contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     im2 = image.copy()
-    
+
     all_rect = []
     # For all the rectangles with a certain size mask them
-    for cnt in contours: 
-        x, y, w, h = cv2.boundingRect(cnt) 
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
         if x < 200 and y < 200:
-            rect = cv2.rectangle(im2.astype('uint8'), (x, y), (x + w, y + h), (255, 0, 0), 2) 
+            rect = cv2.rectangle(im2.astype("uint8"), (x, y), (x + w, y + h), (255, 0, 0), 2)
             all_rect.append(rect)
-            im2[y:y + h, x:x + w] = [255,255,255]
-            
+            im2[y : y + h, x : x + w] = [255, 255, 255]
 
-    
-
-    array_to_pdf(im2,out)
+    array_to_pdf(im2, out)

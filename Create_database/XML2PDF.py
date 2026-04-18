@@ -46,7 +46,7 @@ def read_lead(lead_str):
 def read_xml(file):
     matrix = {}
     with open(file) as fd:
-        doc = xml.parse(fd.read())
+        doc = xml.parse(fd.read(), disable_entities=True)
     
     num_lead = len(doc['AnnotatedECG']['component']['series']['component']['sequenceSet']['component'])
     for i in range(1,num_lead):

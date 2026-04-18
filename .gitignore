@@ -1,0 +1,48 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Cython
+*.c
+*.cpp
+!ecgtizer/*.c
+!ecgtizer/*.cpp
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Sphinx documentation
+docs/_build/
+
+# Vignette / notebook outputs
+output/
+
+# Test / coverage artefacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+

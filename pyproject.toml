@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ecgtizer"
+version = "1.0.0"
+description = "ECG digitization library — convert PDF/image ECGs to digital signals (XML)"
+readme = "README.md"
+license = "Unlicense"
+requires-python = ">=3.10"
+authors = [
+    { name = "Alex Lence", email = "alex.lence@ird.fr" },
+]
+keywords = ["ecg", "electrocardiogram", "pdf", "digitization", "signal-processing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+dependencies = [
+    "numpy",
+    "pdf2image",
+    "scipy",
+    "opencv-python",
+    "matplotlib",
+    "reportlab",
+    "Pillow>=12.2.0",
+    "xmltodict>=0.13.0",
+    "torch",
+    "fastdtw",
+    "pyCompare",
+]
+
+[project.scripts]
+ecgtizer = "ecgtizer.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/your-org/ecgtizer"
+Documentation = "https://github.com/your-org/ecgtizer#readme"
+Repository = "https://github.com/your-org/ecgtizer"
+Issues = "https://github.com/your-org/ecgtizer/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "pandas",
+    "black",
+    "flake8",
+    "mypy",
+    "pre-commit",
+]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints",
+]
+
+[tool.setuptools.packages.find]
+include = ["ecgtizer*"]
+
+[tool.setuptools.package-data]
+ecgtizer = ["fonts/*.ttf"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --cov=ecgtizer --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["ecgtizer"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if DEBUG:",
+    "if __name__",
+    "plt\\.show",
+    "plt\\.figure",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
