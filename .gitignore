@@ -40,3 +40,9 @@ docs/_build/
 # Vignette / notebook outputs
 output/
 
+# Test / coverage artefacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
