@@ -75,6 +75,19 @@ Findings from full codebase security audit. Issues filed on UMMISCO/ecgtizer.
 
 ---
 
+## Backlog (untracked local scripts — refactor before committing)
+
+Four diagnostic scripts sitting untracked in `scripts/` with hardcoded `~/Desktop/ecg_test/10 ECGs_testing` paths. Useful tooling but not portable as-is:
+
+- [ ] `scripts/batch_diagnostics.py` (479 LOC) — batch diagnostic panels + round-trip per ECG
+- [ ] `scripts/diagnose_quality.py` (225 LOC) — step-by-step pipeline diagnostic, saves intermediate images
+- [ ] `scripts/ecg_diagnostic_report.py` (945 LOC) — polished publication-quality diagnostic panels
+- [ ] `scripts/roundtrip_test.py` (84 LOC) — PDF → XML → PDF → XML scatter comparison
+
+**Refactor task:** take input/output dirs via argparse (`--input-dir`, `--output-dir`), drop hardcoded `os.path.expanduser('~/Desktop/...')`, add usage examples in docstrings. Then commit. ~30 min per script.
+
+---
+
 ## Test Coverage Summary
 | Module | Unit Tests | Integration Tests | Total |
 |--------|-----------|-------------------|-------|
