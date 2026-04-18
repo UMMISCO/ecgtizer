@@ -1,3 +1,4 @@
+import hashlib
 import pickle
 import argparse
 import numpy as np
@@ -20,6 +21,32 @@ import random
 import cv2
 import sys
 import time
+
+# SHA-256 checksums of vendored pickle artefacts. pickle.load is a code-exec
+# sink if the file is tampered with, so verify before unpickling. Regenerate
+# these hashes if the artefacts are legitimately updated.
+_EXPECTED_SHA256 = {
+    "translation.pkl": "a086b7661a335b21a6bebc6b8683bede1415a0e1a0febe67825fbcea9381bd86",
+    "styles.pkl":      "1bdd26a3f6d4c35f33168104f830e6dc78c4409edf8fc902be26a80764f24140",
+}
+
+
+def _verified_pickle_load(path):
+    """Load a pickle file only if its SHA-256 matches the expected hash."""
+    name = os.path.basename(path)
+    expected = _EXPECTED_SHA256.get(name)
+    if expected is None:
+        raise ValueError(f"No expected checksum registered for {name!r}")
+    with open(path, "rb") as f:
+        blob = f.read()
+    actual = hashlib.sha256(blob).hexdigest()
+    if actual != expected:
+        raise ValueError(
+            f"SHA-256 mismatch for {path}: expected {expected}, got {actual}. "
+            "Refusing to unpickle tampered artefact."
+        )
+    return pickle.loads(blob)
+
 
 def get_parser():
     description = 'Create a corpus for medical corpus'
@@ -179,8 +206,7 @@ def get_handwritten(link,num_words,input_file,output_dir,x_offset=0,y_offset=0,h
     words = random.choices(doc.ents,k=num_words)
 
         #Load the pretrained RNN model for handwritten text generation
-    with open(os.path.join(os.path.join('HandwrittenText','data'), 'translation.pkl'), 'rb') as file:
-        translation = pickle.load(file)
+    translation = _verified_pickle_load(os.path.join('HandwrittenText', 'data', 'translation.pkl'))
     rev_translation = {v: k for k, v in translation.items()}
     charset = [rev_translation[i] for i in range(len(rev_translation))]
     charset[0] = ''
@@ -204,8 +230,7 @@ def get_handwritten(link,num_words,input_file,output_dir,x_offset=0,y_offset=0,h
             style = None
             if style is not None:
                 style = None
-                with open(os.path.join(os.path.join('HandwrittenText','data'), 'styles.pkl'), 'rb') as file:
-                    styles = pickle.load(file)
+                styles = _verified_pickle_load(os.path.join('HandwrittenText', 'data', 'styles.pkl'))
                 if style > len(styles[0]):
                     raise ValueError('Requested style is not in style list')
                 style = [styles[0][style], styles[1][style]]
