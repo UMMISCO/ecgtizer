@@ -14,8 +14,6 @@ from .PDF2XML import (
     check_noise_type,
     text_extraction,
     tracks_extraction,
-    clean_tracks,
-    sup_holes,
     lead_extraction,
     lead_cutting,
 )

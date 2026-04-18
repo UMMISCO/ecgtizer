@@ -276,8 +276,6 @@ def normalization(Z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     for i in range(len(Z)):
         mini = Z[:, i].min()
         maxi = Z[:, i].max()
-        temp = -1 + ((Z[i] - mini) * (2)) / (maxi - mini)
-        signal_bef = temp
         nyquist = 0.5 * SAMPLING_FREQ
         low_cutoff = LOW_CUTOFF_HZ / nyquist
         high_cutoff = HIGH_CUTOFF_HZ / nyquist
@@ -285,7 +283,6 @@ def normalization(Z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         original_sampling_frequency = SIGNAL_LENGTH
         b, a = signal.butter(4, [low_cutoff, high_cutoff], btype="band")
         filtered_signal = signal.lfilter(b, a, Z[i])
-        # filtered_signal = signal_bef
         resampled_signal, mini, maxi = normalization2(
             signal.resample(
                 filtered_signal, int(len(filtered_signal) * (new_sampling_frequency / original_sampling_frequency))

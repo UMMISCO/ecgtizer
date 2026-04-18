@@ -5,10 +5,7 @@ using morphological operations, then re-exports the cleaned image as a
 new PDF file.
 """
 
-import sys
-
 from .PDF2XML import convert_PDF2image
-import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 

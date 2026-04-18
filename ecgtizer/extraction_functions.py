@@ -10,7 +10,6 @@ Three strategies with different speed/accuracy trade-offs:
 from __future__ import annotations
 
 import numpy as np
-import cv2
 
 
 def lazy_extraction(image_bin: np.ndarray) -> list[int]:

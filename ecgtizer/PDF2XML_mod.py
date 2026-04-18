@@ -11,9 +11,8 @@ import logging
 import os
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
-from os.path import isfile, join, isdir, exists
-from os import listdir, makedirs
-import xmltodict as xml
+from os.path import exists
+from os import makedirs
 import numpy as np
 
 logger = logging.getLogger(__name__)

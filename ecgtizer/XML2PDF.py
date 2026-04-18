@@ -9,28 +9,19 @@ lead labels, patient metadata, and optional notch filtering.
 
 from __future__ import annotations
 
-from os.path import isfile, join, isdir, exists
-from os import listdir, makedirs
-
-
-import argparse
 import math
+import os
 import os.path
-import subprocess
-import sys
-import warnings
 import numpy as np
 import xmltodict as xml
-import matplotlib.pyplot as plt
-from scipy.signal import butter, lfilter, filtfilt, iirnotch
+from scipy.signal import lfilter, iirnotch
 from scipy.ndimage import uniform_filter
-from reportlab.graphics.shapes import Drawing, Line, PolyLine, String, Group, colors
-from reportlab.lib.units import mm, inch
+from reportlab.graphics.shapes import Drawing, Line, PolyLine, String, colors
+from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
-from reportlab.graphics import renderPDF, renderPM
+from reportlab.graphics import renderPDF
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-import os
 
 
 def read_lead(lead_str: str) -> list[int | float]:
@@ -423,19 +414,11 @@ class ecg_plot:
     ################ Plot lead ######################################
     def add_lead_plots(self, impulse_pulse, data, freq, type_of_pdf, complet, offset=0):
         """Lead plots, aligned into a grid of ROWS x COLS"""
-        ticks = self.ticks_positions(self.time0, self.time1, self.speed)
         # Divide the record into sector for each lead
         sector_w = self.graph_w / self.cols
         sector_h = self.graph_h / self.rows
         k = 0
         for c in range(0, self.cols):
-
-            # Add the ticks over the X axis.
-            for pos in ticks:
-                x = pos + self.graph_x + sector_w * c
-                # Echelle bleu en bas
-                # self.draw.add(self.axis_tick(x, self.MARGIN_BOTTOM, self.sty_line_blue))
-                # self.draw.add(self.draw_text(x+0.5, self.MARGIN_BOTTOM+0.5, '%.1f' % ticks[pos], self.sty_str_blue))
 
             if type_of_pdf == "type1":
                 range_max = self.rows - 1
@@ -544,7 +527,6 @@ def Write_PDF(ecg: dict[str, np.ndarray], path_output: str, type_of_pdf: str, le
         else:
             impulse_pulse.append(1000)
 
-    File_name = "test"
     output_units = mm
     ampli = 10
     speed = 25
