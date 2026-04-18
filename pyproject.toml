@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "ECG digitization library — convert PDF/image ECGs to digital signals (XML)"
 readme = "README.md"
 license = "Unlicense"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "Alex Lence", email = "alex.lence@ird.fr" },
 ]
@@ -20,7 +20,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -90,10 +89,10 @@ exclude_lines = [
 
 [tool.black]
 line-length = 120
-target-version = ["py39"]
+target-version = ["py310"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
